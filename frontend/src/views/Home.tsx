@@ -5,10 +5,12 @@ import { useTheme } from '../context/ThemeContext';
 import { Feature } from '../types';
 import Modal from '../components/Modal';
 import Register from './Register';
+import Login from './Login';
 
 const Home: React.FC = () => {
   const { isDarkMode, toggleTheme } = useTheme();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const features: Feature[] = [
     {
@@ -67,8 +69,8 @@ const Home: React.FC = () => {
                   <MoonIcon className="h-5 w-5" aria-hidden="true" />
                 )}
               </button>
-              <Link
-                to="/login"
+              <button
+                onClick={() => setIsLoginModalOpen(true)}
                 className={`inline-flex items-center px-4 py-2 text-sm font-medium ${
                   isDarkMode 
                     ? 'text-gray-300 hover:text-primary-400' 
@@ -76,7 +78,7 @@ const Home: React.FC = () => {
                 } transition-colors duration-200`}
               >
                 Login
-              </Link>
+              </button>
               <button
                 onClick={() => setIsRegisterModalOpen(true)}
                 className="ml-4 px-4 py-2 text-sm font-medium text-white bg-blue-700 hover:bg-blue-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -100,7 +102,7 @@ const Home: React.FC = () => {
               ? 'from-primary-900 to-gray-900' 
               : 'from-blue-700 to-blue-900'
           } mix-blend-multiply`} />
-          <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOHM5Ljk0MSAwIDE4LTguMDU5IDE4LTE4cy04LjA1OS0xOC0xOC0xOHptMCAzMmMtNy43MzIgMC0xNC02LjI2OC0xNC0xNHM2LjI2OC0xNCAxNC0xNHMxNCA2LjI2OCAxNCAxNHMtNi4yNjggMTQtMTQgMTR6IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9Ii4xIi8+PC9nPjwvc3ZnPg==')]" />
+          <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOHM4LjA1OSAxOCAxOHM5Ljk0MSAwIDE4LTguMDU5IDE4LTE4cy04LjA1OS0xOC0xNC0xOHptMCAzMmMtNy43MzIgMC0xNC02LjI2OC0xNC0xNHM2LjI2OC0xNCAxNC0xNHMxNCA2LjI2OCAxNCAxNHMtNi4yNjggMTQtMTQgMTR6IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9Ii4xIi8+PC9nPjwvc3ZnPg==')]" />
         </div>
         <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
@@ -172,9 +174,27 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* Register Modal */}
+      {/* Modals */}
       <Modal isOpen={isRegisterModalOpen} onClose={() => setIsRegisterModalOpen(false)}>
-        <Register isModal onClose={() => setIsRegisterModalOpen(false)} />
+        <Register 
+          isModal 
+          onClose={() => setIsRegisterModalOpen(false)} 
+          onSwitchToLogin={() => {
+            setIsRegisterModalOpen(false);
+            setIsLoginModalOpen(true);
+          }}
+        />
+      </Modal>
+
+      <Modal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)}>
+        <Login 
+          isModal 
+          onClose={() => setIsLoginModalOpen(false)} 
+          onSwitchToRegister={() => {
+            setIsLoginModalOpen(false);
+            setIsRegisterModalOpen(true);
+          }}
+        />
       </Modal>
     </>
   );

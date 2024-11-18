@@ -1,23 +1,27 @@
 import React from 'react';
-    import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-    import Home from './views/Home';
-    import Lesson from './views/Lesson';
-    import ProjectSubmission from './views/ProjectSubmission';
-    import CapstoneCollaboration from './views/CapstoneCollaboration';
-    import Dashboard from './views/Dashboard';
+import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext';
+import Home from './views/Home';
+import Dashboard from './views/Dashboard';
+import Lesson from './views/Lesson';
+import Login from './views/Login';
 
-    function App() {
-      return (
-        <Router>
+const App: React.FC = () => {
+  return (
+    <ThemeProvider>
+      <Router>
+        <div className="min-h-screen">
           <Switch>
-            <Route path="/" exact component={Home} />
-            <Route path="/lesson/:id" component={Lesson} />
-            <Route path="/project-submission" component={ProjectSubmission} />
-            <Route path="/capstone-collaboration" component={CapstoneCollaboration} />
+            <Route exact path="/" component={Home} />
             <Route path="/dashboard" component={Dashboard} />
+            <Route path="/lesson/:id" component={Lesson} />
+            <Route path="/login" component={Login} />
+            <Redirect to="/" />
           </Switch>
-        </Router>
-      );
-    }
+        </div>
+      </Router>
+    </ThemeProvider>
+  );
+};
 
-    export default App;
+export default App;

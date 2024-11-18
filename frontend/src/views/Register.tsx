@@ -6,9 +6,10 @@ import { FcGoogle } from 'react-icons/fc';
 interface RegisterProps {
   isModal?: boolean;
   onClose?: () => void;
+  onSwitchToLogin?: () => void;
 }
 
-const Register: React.FC<RegisterProps> = ({ isModal, onClose }) => {
+const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }) => {
   const { isDarkMode } = useTheme();
   const [formData, setFormData] = useState({
     email: '',
@@ -28,6 +29,13 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose }) => {
     // Add Google OAuth logic here
     if (isModal && onClose) {
       onClose();
+    }
+  };
+
+  const handleSwitchToLogin = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isModal && onSwitchToLogin) {
+      onSwitchToLogin();
     }
   };
 
@@ -152,9 +160,18 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose }) => {
 
         <p className={`mt-4 text-center text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
           Already have an account?{' '}
-          <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-            Sign in
-          </Link>
+          {isModal ? (
+            <button
+              onClick={handleSwitchToLogin}
+              className="font-medium text-blue-600 hover:text-blue-500"
+            >
+              Sign in
+            </button>
+          ) : (
+            <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+              Sign in
+            </Link>
+          )}
         </p>
       </div>
     </div>

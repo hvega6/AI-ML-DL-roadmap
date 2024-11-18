@@ -4,6 +4,12 @@ import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User, { IUser } from '../models/User';
 
+declare global {
+  namespace Express {
+    interface User extends IUser {}
+  }
+}
+
 // Local Strategy
 passport.use(new LocalStrategy(
   { usernameField: 'email' },
@@ -44,37 +50,39 @@ passport.use(new JwtStrategy(jwtOptions, async (payload, done) => {
   }
 }));
 
-// Google OAuth Strategy
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID || '',
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-  callbackURL: '/auth/google/callback',
-  scope: ['profile', 'email']
-}, async (accessToken, refreshToken, profile, done) => {
-  try {
-    // Check if user already exists
-    const existingUser = await User.findOne({ googleId: profile.id });
-    if (existingUser) {
-      return done(null, existingUser);
+// Google OAuth Strategy (only if credentials are provided)
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: '/auth/google/callback',
+    scope: ['profile', 'email']
+  }, async (accessToken, refreshToken, profile, done) => {
+    try {
+      // Check if user already exists
+      const existingUser = await User.findOne({ googleId: profile.id });
+      if (existingUser) {
+        return done(null, existingUser);
+      }
+
+      // Create new user
+      const newUser = await User.create({
+        googleId: profile.id,
+        email: profile.emails?.[0]?.value,
+        username: profile.emails?.[0]?.value?.split('@')[0] || `user${Date.now()}`,
+        displayName: profile.displayName,
+        avatar: profile.photos?.[0]?.value
+      });
+
+      done(null, newUser);
+    } catch (error) {
+      done(error, false);
     }
-
-    // Create new user
-    const newUser = await User.create({
-      googleId: profile.id,
-      email: profile.emails?.[0]?.value,
-      username: profile.emails?.[0]?.value?.split('@')[0] || `user${Date.now()}`,
-      displayName: profile.displayName,
-      avatar: profile.photos?.[0]?.value
-    });
-
-    done(null, newUser);
-  } catch (error) {
-    done(error, false);
-  }
-}));
+  }));
+}
 
 // Serialization
-passport.serializeUser((user: IUser, done) => {
+passport.serializeUser((user, done) => {
   done(null, user.id);
 });
 

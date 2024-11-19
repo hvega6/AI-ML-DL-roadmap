@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { HomeIcon, BookOpenIcon, AcademicCapIcon, ArrowUpIcon } from '@heroicons/react/24/outline';
 import { useTheme } from '../context/ThemeContext';
@@ -12,6 +12,8 @@ const Home: React.FC = () => {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [isImageVisible, setIsImageVisible] = useState(false);
+  const imageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,6 +22,31 @@ const Home: React.FC = () => {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsImageVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      {
+        threshold: 0.5, // Trigger when 50% of the element is visible
+        rootMargin: '-100px 0px' // Adds a negative margin to delay the trigger
+      }
+    );
+
+    if (imageRef.current) {
+      observer.observe(imageRef.current);
+    }
+
+    return () => {
+      if (imageRef.current) {
+        observer.unobserve(imageRef.current);
+      }
+    };
   }, []);
 
   const scrollToTop = () => {
@@ -114,6 +141,29 @@ const Home: React.FC = () => {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Image Section */}
+      <div 
+        ref={imageRef}
+        className={`py-16 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div 
+            className={`transform transition-all duration-1000 ease-out
+              ${isImageVisible 
+                ? 'opacity-100 translate-y-0' 
+                : 'opacity-0 translate-y-32'
+              }`}
+          >
+            <img
+              src={new URL('/src/public/main/infography.png', import.meta.url).href}
+              alt="AI Learning Roadmap Infographic"
+              className="mx-auto max-w-full h-auto rounded-lg shadow-lg transition-transform duration-300 hover:scale-105"
+              style={{ maxWidth: '1200px' }}
+            />
           </div>
         </div>
       </div>

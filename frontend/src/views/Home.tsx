@@ -148,7 +148,7 @@ const Home: React.FC = () => {
       {/* Main Image Section */}
       <div 
         ref={imageRef}
-        className={`py-16 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}
+        className={`py-16 ${isDarkMode ? 'bg-gray-900' : 'bg-blue-500'}`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div 

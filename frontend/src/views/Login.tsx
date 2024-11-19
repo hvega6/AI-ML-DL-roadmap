@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
-import { FcGoogle } from 'react-icons/fc';
+import { UserCircleIcon } from '@heroicons/react/24/outline';
 
 interface LoginProps {
   isModal?: boolean;
@@ -147,14 +147,10 @@ const Login: React.FC<LoginProps> = ({ isModal, onClose, onSwitchToRegister }) =
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className={`w-full flex items-center justify-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium ${
-                isDarkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white hover:bg-gray-600' 
-                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
+              className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-              <FcGoogle className="w-5 h-5 mr-2" />
-              Google
+              <UserCircleIcon className="h-5 w-5 text-blue-500" />
+              Continue with Google
             </button>
           </div>
         </form>

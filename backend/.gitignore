@@ -74,7 +74,7 @@ build/Release
 *.swo
 *.swn
 *.bak
-
+.env
 # OS generated files
 .DS_Store
 .DS_Store?

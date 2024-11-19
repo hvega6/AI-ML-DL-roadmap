@@ -4,6 +4,7 @@ import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User, { IUser } from '../models/User';
 
+// Extend Express Request type
 declare global {
   namespace Express {
     interface User extends IUser {}
@@ -13,7 +14,7 @@ declare global {
 // Local Strategy
 passport.use(new LocalStrategy(
   { usernameField: 'email' },
-  async (email, password, done) => {
+  async (email: string, password: string, done: (error: any, user?: IUser | false, options?: { message: string }) => void) => {
     try {
       const user = await User.findOne({ email });
       if (!user) {
@@ -38,7 +39,7 @@ const jwtOptions = {
   secretOrKey: process.env.JWT_SECRET || 'your-secret-key'
 };
 
-passport.use(new JwtStrategy(jwtOptions, async (payload, done) => {
+passport.use(new JwtStrategy(jwtOptions, async (payload: { id: string }, done: (error: any, user?: IUser | false) => void) => {
   try {
     const user = await User.findById(payload.id);
     if (user) {
@@ -55,9 +56,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: '/auth/google/callback',
-    scope: ['profile', 'email']
-  }, async (accessToken, refreshToken, profile, done) => {
+    callbackURL: '/auth/google/callback'
+  }, async (accessToken: string, refreshToken: string, profile: any, done: (error: any, user?: IUser | false) => void) => {
     try {
       // Check if user already exists
       const existingUser = await User.findOne({ googleId: profile.id });
@@ -82,11 +82,11 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 }
 
 // Serialization
-passport.serializeUser((user, done) => {
+passport.serializeUser((user: IUser, done: (error: any, id?: string) => void) => {
   done(null, user.id);
 });
 
-passport.deserializeUser(async (id: string, done) => {
+passport.deserializeUser(async (id: string, done: (error: any, user?: IUser | null) => void) => {
   try {
     const user = await User.findById(id);
     done(null, user);

@@ -1,4 +1,4 @@
-import mongoose, { Document } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 export interface IUser extends Document {
@@ -8,40 +8,76 @@ export interface IUser extends Document {
   googleId?: string;
   displayName?: string;
   avatar?: string;
-  progress: Array<{ lessonId: mongoose.Types.ObjectId; completed: boolean }>;
+  progress: Array<{
+    lessonId: mongoose.Types.ObjectId;
+    completed: boolean;
+  }>;
   badges: string[];
-  comparePassword(password: string): Promise<boolean>;
+  comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String },
-  googleId: { type: String },
-  displayName: { type: String },
-  avatar: { type: String },
+const userSchema = new Schema<IUser>({
+  username: { 
+    type: String, 
+    required: true, 
+    unique: true,
+    trim: true,
+    minlength: 3 
+  },
+  email: { 
+    type: String, 
+    required: true, 
+    unique: true,
+    trim: true,
+    lowercase: true
+  },
+  password: { 
+    type: String,
+    minlength: 6
+  },
+  googleId: { 
+    type: String,
+    sparse: true,
+    unique: true
+  },
+  displayName: { 
+    type: String,
+    trim: true
+  },
+  avatar: { 
+    type: String 
+  },
   progress: [{ 
-    lessonId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' }, 
-    completed: Boolean 
+    lessonId: { 
+      type: Schema.Types.ObjectId, 
+      ref: 'Lesson',
+      required: true
+    }, 
+    completed: {
+      type: Boolean,
+      default: false
+    }
   }],
-  badges: [String],
+  badges: [{
+    type: String
+  }]
 }, {
   timestamps: true
 });
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {
-  if (this.isModified('password') && this.password) {
+  if (this.isModified('password')) {
     const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    this.password = await bcrypt.hash(this.password!, salt);
   }
   next();
 });
 
 // Compare password method
-userSchema.methods.comparePassword = async function(password: string): Promise<boolean> {
+userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
   if (!this.password) return false;
-  return await bcrypt.compare(password, this.password);
+  return bcrypt.compare(candidatePassword, this.password);
 };
 
 export default mongoose.model<IUser>('User', userSchema);

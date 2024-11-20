@@ -136,8 +136,8 @@ const Curriculum: React.FC = () => {
       weekNumber: 11,
     },
     {
-      title: "Phase 2 Integration",
-      description: "Capstone preparation",
+      title: "Capstone Two: Multimodal AI System",
+      description: "Create a system integrating NLP and speech recognition",
       icon: <AcademicCapIcon className="w-6 h-6" />,
       date: "Week 12",
       phase: "Phase 2: Intermediate",

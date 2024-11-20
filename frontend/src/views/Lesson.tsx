@@ -36,12 +36,12 @@ const Lesson: React.FC = () => {
       icon: <BookOpenIcon className="h-5 w-5" />,
     },
     {
-      name: 'practice',
-      icon: <CodeBracketIcon className="h-5 w-5" />,
-    },
-    {
       name: 'quiz',
       icon: <AcademicCapIcon className="h-5 w-5" />,
+    },
+    {
+      name: 'practice',
+      icon: <CodeBracketIcon className="h-5 w-5" />,
     },
   ];
 

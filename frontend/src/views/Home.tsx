@@ -6,6 +6,7 @@ import { Feature } from '../types';
 import Modal from '../components/Modal';
 import Register from './Register';
 import Login from './Login';
+import Footer from '../components/Footer';
 
 const Home: React.FC = () => {
   const { isDarkMode } = useTheme();
@@ -253,6 +254,8 @@ const Home: React.FC = () => {
         </div>
       </div>
 
+      {/* Footer */}
+      <Footer />
 
       {/* Modals */}
       <Modal isOpen={isRegisterModalOpen} onClose={() => setIsRegisterModalOpen(false)}>

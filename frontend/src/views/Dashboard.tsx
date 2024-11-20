@@ -7,6 +7,7 @@ import {
   AcademicCapIcon,
   BoltIcon
 } from '@heroicons/react/24/outline';
+import { curriculum } from '../data/curriculum';
 
 interface CourseProgress {
   name: string;
@@ -18,26 +19,12 @@ interface CourseProgress {
 const Dashboard: React.FC = () => {
   const { isDarkMode } = useTheme();
 
-  const recentCourses: CourseProgress[] = [
-    {
-      name: 'Neural Networks',
-      status: 'completed',
-      lastAccessed: '2 days ago',
-      progress: 100
-    },
-    {
-      name: 'Deep Learning Fundamentals',
-      status: 'in-progress',
-      lastAccessed: '1 day ago',
-      progress: 60
-    },
-    {
-      name: 'Computer Vision',
-      status: 'locked',
-      lastAccessed: '-',
-      progress: 0
-    }
-  ];
+  const recentCourses = curriculum.lessons.slice(0, 3).map(lesson => ({
+    name: lesson.title,
+    status: 'in-progress' as const,
+    lastAccessed: '1 day ago',
+    progress: 60
+  }));
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-blue-50'}`}>
@@ -148,9 +135,13 @@ const Dashboard: React.FC = () => {
           }`}>Recent Courses</h2>
           <div className="space-y-4">
             {recentCourses.map((course, index) => (
-              <div key={index} className={`p-4 rounded-lg ${
-                isDarkMode ? 'bg-gray-700' : 'bg-blue-50'
-              }`}>
+              <Link 
+                key={index} 
+                to={`/lesson/${index + 1}`}
+                className={`block p-4 rounded-lg ${
+                  isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-blue-50 hover:bg-blue-100'
+                } transition-colors duration-200`}
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className={`font-medium ${
@@ -163,8 +154,8 @@ const Dashboard: React.FC = () => {
                   <div className="flex items-center space-x-4">
                     <div className="w-32 bg-gray-200 rounded-full h-2.5">
                       <div
-                        className="bg-blue-600 h-2.5 rounded-full"
                         style={{ width: `${course.progress}%` }}
+                        className="bg-blue-600 h-2.5 rounded-full"
                       ></div>
                     </div>
                     <span className={`text-sm font-medium ${
@@ -172,21 +163,21 @@ const Dashboard: React.FC = () => {
                     }`}>{course.progress}%</span>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
 
         {/* Continue Learning Button */}
         <Link
-          to="/lesson/next"
+          to="/lessons"
           className={`inline-flex items-center px-6 py-3 text-base font-medium rounded-md ${
             isDarkMode 
               ? 'bg-blue-600 hover:bg-blue-700 text-white' 
               : 'bg-blue-600 hover:bg-blue-700 text-white'
           } transition-colors duration-200`}
         >
-          Continue Learning
+          View All Lessons
         </Link>
       </div>
     </div>

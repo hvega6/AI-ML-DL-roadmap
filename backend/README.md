@@ -1,207 +1,258 @@
 # AI/ML/DL Learning Platform Backend
 
-A robust backend service for the AI/ML/DL Learning Platform, built with TypeScript, Express, and MongoDB.
+A robust backend system for an AI/ML/DL educational platform built with TypeScript, Express, and MongoDB.
 
-## 🚀 Features
+## 🚀 Quick Start
 
-- **Authentication System**
-  - Local authentication (email/password)
-  - JWT-based authentication
-  - Google OAuth integration
-  - Secure password hashing
-  - Token-based session management
-
-- **Type Safety**
-  - Full TypeScript implementation
-  - Strict type checking
-  - Type guards and interfaces
-  - Comprehensive error handling
-
-- **Database Integration**
-  - MongoDB with Mongoose ODM
-  - Type-safe schemas
-  - Efficient data modeling
-  - Secure connection handling
-
-## 🛠️ Tech Stack
-
-- **Runtime**: Node.js
-- **Language**: TypeScript
-- **Framework**: Express.js
-- **Database**: MongoDB
-- **Authentication**: Passport.js
-- **Security**: bcryptjs, JWT
-- **OAuth**: Google OAuth 2.0
-
-## 📋 Prerequisites
-
-- Node.js (v14 or higher)
-- MongoDB (local or Atlas URI)
-- Google OAuth credentials (for Google sign-in)
-- TypeScript knowledge
-
-## 🔧 Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd backend
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   Create a `.env` file in the root directory:
-   ```env
-   # Server Configuration
-   PORT=5000
-   NODE_ENV=development
-
-   # Database
-   MONGODB_URI=your_mongodb_connection_string
-
-   # Authentication
-   JWT_SECRET=your_jwt_secret_key
-   
-   # Google OAuth
-   GOOGLE_CLIENT_ID=your_google_client_id
-   GOOGLE_CLIENT_SECRET=your_google_client_secret
-   GOOGLE_CALLBACK_URL=http://localhost:5000/auth/google/callback
-   ```
-
-4. **Build the project**
-   ```bash
-   npm run build
-   ```
-
-5. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-
-## 🏗️ Project Structure
-
-```
-backend/
-├── src/
-│   ├── config/
-│   │   ├── database.ts     # Database configuration
-│   │   └── passport.ts     # Passport authentication strategies
-│   ├── models/
-│   │   └── User.ts         # User model and schema
-│   ├── routes/
-│   │   └── auth.ts         # Authentication routes
-│   ├── types/
-│   │   └── index.ts        # TypeScript type definitions
-│   └── app.ts              # Express application setup
-├── .env                    # Environment variables
-├── tsconfig.json          # TypeScript configuration
-└── package.json           # Project dependencies
+1. Install dependencies:
+```bash
+npm install
 ```
 
-## 🔒 API Endpoints
+2. Set up environment variables:
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
+
+3. Start the development server:
+```bash
+npm run dev
+```
+
+## 📚 API Documentation
 
 ### Authentication Routes
+```typescript
+POST /api/auth/register
+// Register a new user
+{
+  "username": string,
+  "email": string,
+  "password": string
+}
 
-#### Local Authentication
-- **POST** `/auth/register`
-  - Register a new user
-  - Body: `{ email: string, password: string, username: string }`
+POST /api/auth/login
+// Login with credentials
+{
+  "email": string,
+  "password": string
+}
 
-- **POST** `/auth/login`
-  - Login with email and password
-  - Body: `{ email: string, password: string }`
+POST /api/auth/google
+// Google OAuth login
 
-#### Google OAuth
-- **GET** `/auth/google`
-  - Initiate Google OAuth flow
+GET /api/auth/logout
+// Logout current user
 
-- **GET** `/auth/google/callback`
-  - Google OAuth callback URL
-
-#### Protected Routes
-- **GET** `/auth/profile`
-  - Get user profile (requires authentication)
-  - Header: `Authorization: Bearer <token>`
-
-- **POST** `/auth/logout`
-  - Logout user
-  - Header: `Authorization: Bearer <token>`
-
-## 🔐 Security Features
-
-- Password hashing with bcrypt
-- JWT token authentication
-- HTTP-only cookies
-- CORS protection
-- Rate limiting
-- Input validation
-- XSS protection
-
-## 🧪 Testing
-
-```bash
-# Run tests
-npm test
-
-# Run tests with coverage
-npm run test:coverage
+GET /api/auth/me
+// Get current user profile
 ```
 
-## 📝 Development Guidelines
+### Course Routes
+```typescript
+GET /api/courses
+// List all courses
+Query params:
+- category: 'AI' | 'ML' | 'DL' | 'Math' | 'Programming'
+- difficulty: 'beginner' | 'intermediate' | 'advanced'
+- status: 'draft' | 'published' | 'archived'
+- page: number
+- limit: number
 
-1. **TypeScript**
-   - Use strict mode
-   - Define interfaces for all data structures
-   - Implement proper error handling
-   - Use type guards where necessary
+POST /api/courses
+// Create a new course (admin only)
+{
+  "title": string,
+  "description": string,
+  "category": "AI" | "ML" | "DL" | "Math" | "Programming",
+  "difficulty": "beginner" | "intermediate" | "advanced",
+  "thumbnail": string,
+  "learningObjectives": string[],
+  "duration": {
+    "weeks": number,
+    "hoursPerWeek": number
+  }
+}
 
-2. **API Design**
-   - Follow RESTful principles
-   - Use proper HTTP methods
-   - Implement proper error responses
-   - Document all endpoints
+GET /api/courses/:id
+// Get course details
 
-3. **Security**
-   - Never store sensitive data in code
-   - Use environment variables for secrets
-   - Implement proper validation
-   - Follow security best practices
+PUT /api/courses/:id
+// Update course (admin only)
 
-## 🚀 Deployment
+DELETE /api/courses/:id
+// Delete course (admin only)
 
-1. **Build the project**
-   ```bash
-   npm run build
-   ```
+POST /api/courses/:id/enroll
+// Enroll in a course
 
-2. **Start production server**
-   ```bash
-   npm start
-   ```
+GET /api/courses/:id/progress
+// Get course progress for current user
+```
 
-## 🤝 Contributing
+### Lesson Routes
+```typescript
+GET /api/courses/:courseId/lessons
+// List all lessons in a course
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+POST /api/courses/:courseId/lessons
+// Create a new lesson (admin only)
+{
+  "title": string,
+  "description": string,
+  "content": [{
+    "type": "text" | "video" | "code" | "quiz",
+    "data": string,
+    "duration": number
+  }],
+  "order": number
+}
 
-## 📄 License
+GET /api/lessons/:id
+// Get lesson details
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+PUT /api/lessons/:id
+// Update lesson (admin only)
 
-## 🆘 Support
+DELETE /api/lessons/:id
+// Delete lesson (admin only)
 
-For support, please open an issue in the repository or contact the development team.
+POST /api/lessons/:id/complete
+// Mark lesson as completed
 
-## 🙏 Acknowledgments
+POST /api/lessons/:id/quiz
+// Submit quiz answers
+{
+  "answers": [{
+    "questionId": string,
+    "answer": number
+  }]
+}
+```
 
-- Express.js team
-- Passport.js contributors
-- MongoDB team
-- TypeScript team
+### Progress Routes
+```typescript
+GET /api/progress
+// Get progress for all enrolled courses
+
+GET /api/progress/:courseId
+// Get detailed progress for a specific course
+
+POST /api/progress/:lessonId/notes
+// Add notes to a lesson
+{
+  "note": string
+}
+
+POST /api/progress/:lessonId/bookmarks
+// Add bookmark to a lesson
+{
+  "timestamp": number,
+  "note": string
+}
+```
+
+### User Routes
+```typescript
+GET /api/users/profile
+// Get user profile
+
+PUT /api/users/profile
+// Update user profile
+{
+  "displayName": string,
+  "bio": string,
+  "preferences": {
+    "notifications": boolean,
+    "language": string,
+    "theme": "light" | "dark"
+  }
+}
+
+GET /api/users/achievements
+// Get user achievements
+
+GET /api/users/courses
+// Get user's enrolled courses
+```
+
+## 🔐 Authentication
+
+The API uses JWT tokens for authentication. Include the token in the Authorization header:
+```
+Authorization: Bearer <token>
+```
+
+## 📝 Models
+
+### User Model
+- Username, email, password
+- Profile information
+- Progress tracking
+- Preferences
+- Achievements
+
+### Course Model
+- Title, description, category
+- Syllabus and learning objectives
+- Enrollment tracking
+- Ratings and reviews
+- Progress statistics
+
+### Lesson Model
+- Multiple content types
+- Quizzes and assignments
+- Resources and attachments
+- Progress tracking
+
+### Progress Model
+- Course and lesson progress
+- Quiz scores
+- Notes and bookmarks
+- Analytics and statistics
+
+## 🛠️ Development
+
+### Prerequisites
+- Node.js >= 14
+- MongoDB >= 4.4
+- TypeScript >= 4.5
+
+### Environment Variables
+```
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/ai-learning
+JWT_SECRET=your-secret-key
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+```
+
+### Available Scripts
+```bash
+npm run dev     # Start development server
+npm run build   # Build for production
+npm start       # Start production server
+npm run lint    # Run ESLint
+npm run test    # Run tests
+```
+
+## 🔍 Error Handling
+
+All API errors follow this format:
+```json
+{
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Error description",
+    "details": {}
+  }
+}
+```
+
+Common error codes:
+- `AUTH_REQUIRED`: Authentication required
+- `INVALID_CREDENTIALS`: Invalid login credentials
+- `NOT_FOUND`: Resource not found
+- `VALIDATION_ERROR`: Invalid input data
+- `PERMISSION_DENIED`: Insufficient permissions

@@ -1,76 +1,39 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import Login from './components/auth/Login';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { ParticleProvider } from './context/ParticleContext';
+import Home from './views/Home';
 import Dashboard from './components/Dashboard';
-
-// Protected Route wrapper component
-const ProtectedRoute: React.FC<{ component: React.ComponentType<any>; path: string; exact?: boolean }> = ({
-  component: Component,
-  ...rest
-}) => {
-  const { user } = useAuth();
-  
-  return (
-    <Route
-      {...rest}
-      render={props =>
-        user ? (
-          <Component {...props} />
-        ) : (
-          <Redirect
-            to={{
-              pathname: "/login",
-              state: { from: props.location }
-            }}
-          />
-        )
-      }
-    />
-  );
-};
-
-// Admin Route wrapper component
-const AdminRoute: React.FC<{ component: React.ComponentType<any>; path: string; exact?: boolean }> = ({
-  component: Component,
-  ...rest
-}) => {
-  const { user } = useAuth();
-  
-  return (
-    <Route
-      {...rest}
-      render={props =>
-        user && user.role === 'admin' ? (
-          <Component {...props} />
-        ) : (
-          <Redirect
-            to={{
-              pathname: "/dashboard",
-              state: { from: props.location }
-            }}
-          />
-        )
-      }
-    />
-  );
-};
+import Navigation from './components/Navigation';
+import Lesson from './views/Lesson';
+import Lessons from './views/Lessons';
+import Curriculum from './views/Curriculum';
+import Resources from './views/Resources';
 
 const App: React.FC = () => {
   return (
     <Router>
-      <AuthProvider>
-        <div className="min-h-screen bg-gray-50">
-          <Switch>
-            <Route exact path="/login" component={Login} />
-            <ProtectedRoute path="/dashboard" component={Dashboard} />
-            {/* Add more routes here */}
-            <Route exact path="/">
-              <Redirect to="/dashboard" />
-            </Route>
-          </Switch>
-        </div>
-      </AuthProvider>
+      <ThemeProvider>
+        <ParticleProvider>
+          <AuthProvider>
+            <div className="min-h-screen">
+              <Navigation />
+              <Switch>
+                {/* Public Routes */}
+                <Route exact path="/" component={Home} />
+                <Route path="/dashboard" component={Dashboard} />
+                
+                {/* Learning Routes */}
+                <Route exact path="/lessons" component={Lessons} />
+                <Route path="/lesson/:id" component={Lesson} />
+                <Route path="/curriculum" component={Curriculum} />
+                <Route path="/resources" component={Resources} />
+              </Switch>
+            </div>
+          </AuthProvider>
+        </ParticleProvider>
+      </ThemeProvider>
     </Router>
   );
 };

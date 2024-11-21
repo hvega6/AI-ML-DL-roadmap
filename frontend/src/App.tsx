@@ -1,45 +1,77 @@
 import React from 'react';
-import { HashRouter, Route, Switch } from 'react-router-dom';
-import { ThemeProvider } from './context/ThemeContext';
-import Navigation from './components/Navigation';
-import Home from './views/Home';
-import Dashboard from './views/Dashboard';
-import Lesson from './views/Lesson';
-import Login from './views/Login';
-import Curriculum from './views/Curriculum';
-import Resources from './views/Resources';
-import Lessons from './views/Lessons';
-import { useTheme } from './context/ThemeContext';
+import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import Login from './components/auth/Login';
+import Dashboard from './components/Dashboard';
 
-const AppContent: React.FC = () => {
-  const { isDarkMode } = useTheme();
-
+// Protected Route wrapper component
+const ProtectedRoute: React.FC<{ component: React.ComponentType<any>; path: string; exact?: boolean }> = ({
+  component: Component,
+  ...rest
+}) => {
+  const { user } = useAuth();
+  
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
-      <Navigation />
-      <main className={`${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
-        <Switch>
-          <Route exact path="/" component={Home} />
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/lesson/:id" component={Lesson} />
-          <Route path="/login" component={Login} />
-          <Route path="/curriculum" component={Curriculum} />
-          <Route path="/resources" component={Resources} />
-          <Route path="/lessons" component={Lessons} />
-          <Route path="*" component={Home} />
-        </Switch>
-      </main>
-    </div>
+    <Route
+      {...rest}
+      render={props =>
+        user ? (
+          <Component {...props} />
+        ) : (
+          <Redirect
+            to={{
+              pathname: "/login",
+              state: { from: props.location }
+            }}
+          />
+        )
+      }
+    />
+  );
+};
+
+// Admin Route wrapper component
+const AdminRoute: React.FC<{ component: React.ComponentType<any>; path: string; exact?: boolean }> = ({
+  component: Component,
+  ...rest
+}) => {
+  const { user } = useAuth();
+  
+  return (
+    <Route
+      {...rest}
+      render={props =>
+        user && user.role === 'admin' ? (
+          <Component {...props} />
+        ) : (
+          <Redirect
+            to={{
+              pathname: "/dashboard",
+              state: { from: props.location }
+            }}
+          />
+        )
+      }
+    />
   );
 };
 
 const App: React.FC = () => {
   return (
-    <ThemeProvider>
-      <HashRouter>
-        <AppContent />
-      </HashRouter>
-    </ThemeProvider>
+    <Router>
+      <AuthProvider>
+        <div className="min-h-screen bg-gray-50">
+          <Switch>
+            <Route exact path="/login" component={Login} />
+            <ProtectedRoute path="/dashboard" component={Dashboard} />
+            {/* Add more routes here */}
+            <Route exact path="/">
+              <Redirect to="/dashboard" />
+            </Route>
+          </Switch>
+        </div>
+      </AuthProvider>
+    </Router>
   );
 };
 

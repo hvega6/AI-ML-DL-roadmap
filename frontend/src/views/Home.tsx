@@ -111,7 +111,7 @@ const Home: React.FC = () => {
       </div>
       
       {/* Hero Section */}
-      <div className="bg-gray-900 py-16 px-4 sm:px-6 lg:px-8 relative">
+      <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-blue-400'} py-16 px-4 sm:px-6 lg:px-8 relative`}>
         <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
           <style>{`
             @keyframes particleAnimation {
@@ -203,22 +203,30 @@ const Home: React.FC = () => {
           </div>
           
           <div className="relative z-10">
-            <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+            <h1 className={`text-4xl font-extrabold tracking-tight ${isDarkMode ? 'text-white' : 'text-blue-900'} sm:text-5xl lg:text-6xl`}>
               Master AI, ML & Deep Learning
             </h1>
-            <p className="mt-6 text-xl text-blue-100 max-w-3xl">
+            <p className={`mt-6 text-xl ${isDarkMode ? 'text-gray-300' : 'text-blue-700'} max-w-3xl`}>
               Your comprehensive learning platform for Artificial Intelligence, Machine Learning, and Deep Learning. Start your journey from basics to advanced concepts with structured learning paths.
             </p>
             <div className="mt-10 flex space-x-4">
               <button
                 onClick={() => setIsRegisterModalOpen(true)}
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-base bg-blue-500 hover:bg-gray-700 transition-colors duration-200"
+                className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-base 
+                  ${isDarkMode 
+                    ? 'bg-blue-500 hover:bg-blue-600' 
+                    : 'bg-blue-500 hover:bg-blue-600 text-white'
+                  } transition-colors duration-200`}
               >
                 Start Learning
               </button>
               <Link 
                 to="/curriculum" 
-                className="inline-flex items-center px-6 py-3 border border-white text-base font-medium rounded-md text-white hover:bg-blue-800 transition-colors duration-200"
+                className={`inline-flex items-center px-6 py-3 border border-white text-base font-medium rounded-md 
+                  ${isDarkMode 
+                    ? 'text-white hover:bg-blue-600' 
+                    : 'text-blue-900 border-blue-900 hover:bg-blue-600 hover:text-white'
+                  } transition-colors duration-200`}
               >
                 View Curriculum
               </Link>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { HomeIcon, BookOpenIcon, AcademicCapIcon, ArrowUpIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { useTheme } from '../context/ThemeContext';
+import { useParticles } from '../context/ParticleContext';
 import { Feature } from '../types';
 import Modal from '../components/Modal';
 import Register from './Register';
@@ -10,6 +11,7 @@ import Footer from '../components/Footer';
 
 const Home: React.FC = () => {
   const { isDarkMode } = useTheme();
+  const staticParticlesData = useParticles();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -73,29 +75,30 @@ const Home: React.FC = () => {
     }
   ];
 
-  const renderParticles = () => {
-    return Array.from({ length: 300 }, (_, i) => {
-      // Randomize particle properties
-      const delay = Math.random() * 14;
-      const duration = 14 + Math.random() * 2;
-      const hue = Math.floor(Math.random() * 360);
-      const size = Math.random() * 3 + 1; // 1-4px
-      const translateX = Math.random() * 200 + 100; // 100-300px
-      const rotateZ = Math.random() * 360;
-      const rotateY = Math.random() * 360;
+  // Determine particle color based on current mode
+  const getParticleColor = (hue: number) => {
+    return isDarkMode 
+      ? `hsla(${hue}, 100%, 50%, 0.5)` 
+      : `hsla(${hue}, 100%, 50%, 0.7)`;
+  };
 
-      return (
-        <div 
-          key={i} 
-          className="absolute w-[2px] h-[2px] rounded-full opacity-0"
-          style={{
-            animation: `orbit${i} ${duration}s infinite`,
-            animationDelay: `${delay}s`,
-            backgroundColor: `hsla(${hue}, 100%, 50%, 1)`,
-          }}
-        />
-      );
-    });
+  const renderParticles = () => {
+    return staticParticlesData.map((particle, i) => (
+      <div 
+        key={i} 
+        className="absolute rounded-full"
+        style={{
+          animation: `particleAnimation ${particle.duration}s infinite`,
+          animationDelay: `${particle.delay}s`,
+          backgroundColor: getParticleColor(particle.hue),
+          top: `${particle.top}%`,
+          left: `${particle.left}%`,
+          width: `${particle.particleSize}px`,
+          height: `${particle.particleSize}px`,
+          transform: `translate(${particle.translateX}px, ${particle.translateY}px) rotate(${particle.rotationAngle}deg)`,
+        }}
+      />
+    ));
   };
 
   return (
@@ -130,21 +133,24 @@ const Home: React.FC = () => {
                 opacity: 0;
                 transform: 
                   scale(0) 
-                  translateX(calc(-2px + ${Math.random() * 4}px)) 
-                  translateY(calc(-2px + ${Math.random() * 4}px));
+                  translateX(calc(-4px + 4px)) 
+                  translateY(calc(-4px + 4px))
+                  rotate(0deg);
               }
               20%, 80% { 
                 opacity: 1;
                 transform: 
                   scale(1) 
-                  translateX(calc(-1px + ${Math.random() * 2}px)) 
-                  translateY(calc(-1px + ${Math.random() * 2}px));
+                  translateX(calc(-2px + 2px)) 
+                  translateY(calc(-2px + 2px))
+                  rotate(0deg);
               }
               50% {
                 transform: 
                   scale(1) 
-                  translateX(calc(-3px + ${Math.random() * 6}px)) 
-                  translateY(calc(-3px + ${Math.random() * 6}px));
+                  translateX(calc(-6px + 6px)) 
+                  translateY(calc(-6px + 6px))
+                  rotate(0deg);
               }
             }
           `}</style>
@@ -152,27 +158,23 @@ const Home: React.FC = () => {
             className="absolute inset-0 overflow-hidden pointer-events-none z-0"
           >
             {/* Hovering Stationary Particles */}
-            {Array.from({ length: 200 }, (_, i) => {
-              const delay = Math.random() * 14;
-              const duration = 14;
-              const hue = Math.floor(Math.random() * 360);
-
-              return (
-                <div 
-                  key={`hover-${i}`} 
-                  className="absolute w-[2px] h-[2px] rounded-full"
-                  style={{
-                    animation: `hoverAnimation ${duration}s infinite`,
-                    animationDelay: `${delay}s`,
-                    backgroundColor: `hsla(${hue}, 100%, 50%, 0.7)`,
-                    top: `${Math.random() * 120}%`,
-                    left: `${Math.random() * 120}%`,
-                    transform: 'translate(-50%, -50%)', // Center each particle
-                  }}
-                />
-              );
-            })}
-
+            {staticParticlesData.map((particle, i) => (
+              <div 
+                key={`hover-${i}`} 
+                className="absolute rounded-full"
+                style={{
+                  animation: `hoverAnimation ${particle.duration}s infinite`,
+                  animationDelay: `${particle.delay}s`,
+                  backgroundColor: getParticleColor(particle.hue),
+                  top: `${particle.top}%`,
+                  left: `${particle.left}%`,
+                  width: `${particle.particleSize}px`,
+                  height: `${particle.particleSize}px`,
+                  transform: `translate(${particle.translateX}px, ${particle.translateY}px) rotate(${particle.rotationAngle}deg)`,
+                }}
+              />
+            ))}
+            
             {/* Random Moving Particles */}
             {Array.from({ length: 300 }, (_, i) => {
               const delay = Math.random() * 5;

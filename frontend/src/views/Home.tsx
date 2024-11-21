@@ -74,100 +74,32 @@ const Home: React.FC = () => {
   ];
 
   const renderParticles = () => {
-    const hoveringParticles = Array.from({ length: 200 }, (_, i) => {
-      // Hovering particles
+    return Array.from({ length: 300 }, (_, i) => {
+      // Randomize particle properties
       const delay = Math.random() * 14;
       const duration = 14 + Math.random() * 2;
       const hue = Math.floor(Math.random() * 360);
+      const size = Math.random() * 3 + 1; // 1-4px
+      const translateX = Math.random() * 200 + 100; // 100-300px
+      const rotateZ = Math.random() * 360;
+      const rotateY = Math.random() * 360;
 
       return (
         <div 
-          key={`hover-${i}`} 
+          key={i} 
           className="absolute w-[2px] h-[2px] rounded-full opacity-0"
           style={{
-            animation: `hover${i} ${duration}s infinite`,
+            animation: `orbit${i} ${duration}s infinite`,
             animationDelay: `${delay}s`,
-            backgroundColor: `hsla(${hue}, 100%, 50%, 0.7)`,
-            top: `${Math.random() * 100}%`,
-            left: `${Math.random() * 100}%`,
+            backgroundColor: `hsla(${hue}, 100%, 50%, 1)`,
           }}
         />
       );
     });
-
-    const shootingParticles = Array.from({ length: 50 }, (_, i) => {
-      // Shooting particles
-      const delay = Math.random() * 10;
-      const duration = 5 + Math.random() * 5;
-      const hue = Math.floor(Math.random() * 360);
-      const angle = Math.random() * Math.PI * 2;
-      const distance = 150 + Math.random() * 200;
-
-      return (
-        <div 
-          key={`shoot-${i}`} 
-          className="absolute w-[1px] h-[1px] rounded-full opacity-0"
-          style={{
-            animation: `shoot${i} ${duration}s infinite`,
-            animationDelay: `${delay}s`,
-            backgroundColor: `hsla(${hue}, 100%, 70%, 0.8)`,
-            top: `${Math.random() * 100}%`,
-            left: `${Math.random() * 100}%`,
-          }}
-        />
-      );
-    });
-
-    return [...hoveringParticles, ...shootingParticles];
   };
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <style>{`
-        ${Array.from({ length: 200 }, (_, i) => `
-          @keyframes hover${i} {
-            0%, 100% { 
-              opacity: 0;
-              transform: scale(0) 
-                         translateX(calc(-2px + ${Math.random() * 4}px)) 
-                         translateY(calc(-2px + ${Math.random() * 4}px));
-            }
-            20%, 80% { 
-              opacity: 1;
-              transform: scale(1) 
-                         translateX(calc(-1px + ${Math.random() * 2}px)) 
-                         translateY(calc(-1px + ${Math.random() * 2}px));
-            }
-            50% {
-              transform: scale(1) 
-                         translateX(calc(-3px + ${Math.random() * 6}px)) 
-                         translateY(calc(-3px + ${Math.random() * 6}px));
-            }
-          }
-        `).join('')}
-
-        ${Array.from({ length: 50 }, (_, i) => `
-          @keyframes shoot${i} {
-            0%, 100% { 
-              opacity: 0;
-              transform: scale(0) translateX(0) translateY(0);
-            }
-            20%, 80% { 
-              opacity: 1;
-              transform: 
-                scale(1) 
-                translateX(${Math.random() * 500 - 250}px) 
-                translateY(${Math.random() * 500 - 250}px);
-            }
-            50% {
-              transform: 
-                scale(1) 
-                translateX(${Math.random() * 600 - 300}px) 
-                translateY(${Math.random() * 600 - 300}px);
-            }
-          }
-        `).join('')}
-      `}</style>
       <div 
         className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
                    w-0 h-0 perspective-[1000px] animate-[rotate_14s_infinite_linear]"
@@ -179,73 +111,118 @@ const Home: React.FC = () => {
       </div>
       
       {/* Hero Section */}
-      <div className="bg-gray-900 py-16 px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="bg-gray-900 py-16 px-4 sm:px-6 lg:px-8 relative">
         <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
           <style>{`
             @keyframes particleAnimation {
               0%, 100% { 
                 opacity: 0;
-                transform: scale(0) 
-                           translateX(calc(-2px + ${Math.random() * 4}px)) 
-                           translateY(calc(-2px + ${Math.random() * 4}px));
+                transform: scale(0) translateX(0) translateY(0);
               }
               20%, 80% { 
                 opacity: 1;
-                transform: scale(1) 
-                           translateX(calc(-1px + ${Math.random() * 2}px)) 
-                           translateY(calc(-1px + ${Math.random() * 2}px));
+                transform: scale(1) translateX(calc(var(--translate-x))) translateY(calc(var(--translate-y)));
+              }
+            }
+
+            @keyframes hoverAnimation {
+              0%, 100% { 
+                opacity: 0;
+                transform: 
+                  scale(0) 
+                  translateX(calc(-2px + ${Math.random() * 4}px)) 
+                  translateY(calc(-2px + ${Math.random() * 4}px));
+              }
+              20%, 80% { 
+                opacity: 1;
+                transform: 
+                  scale(1) 
+                  translateX(calc(-1px + ${Math.random() * 2}px)) 
+                  translateY(calc(-1px + ${Math.random() * 2}px));
               }
               50% {
-                transform: scale(1) 
-                           translateX(calc(-3px + ${Math.random() * 6}px)) 
-                           translateY(calc(-3px + ${Math.random() * 6}px));
+                transform: 
+                  scale(1) 
+                  translateX(calc(-3px + ${Math.random() * 6}px)) 
+                  translateY(calc(-3px + ${Math.random() * 6}px));
               }
             }
           `}</style>
           <div 
-            className="absolute inset-0 overflow-hidden pointer-events-none"
-            style={{ zIndex: 0 }}
+            className="absolute inset-0 overflow-hidden pointer-events-none z-0"
           >
-            {Array.from({ length: 300 }, (_, i) => {
-              const delay = Math.random() * 5;
-              const duration = 5 + Math.random() * 5;
+            {/* Hovering Stationary Particles */}
+            {Array.from({ length: 200 }, (_, i) => {
+              const delay = Math.random() * 14;
+              const duration = 14;
               const hue = Math.floor(Math.random() * 360);
 
               return (
                 <div 
-                  key={i} 
+                  key={`hover-${i}`} 
+                  className="absolute w-[2px] h-[2px] rounded-full"
+                  style={{
+                    animation: `hoverAnimation ${duration}s infinite`,
+                    animationDelay: `${delay}s`,
+                    backgroundColor: `hsla(${hue}, 100%, 50%, 0.7)`,
+                    top: `${Math.random() * 120}%`,
+                    left: `${Math.random() * 120}%`,
+                    transform: 'translate(-50%, -50%)', // Center each particle
+                  }}
+                />
+              );
+            })}
+
+            {/* Random Moving Particles */}
+            {Array.from({ length: 300 }, (_, i) => {
+              const delay = Math.random() * 5;
+              const duration = 5 + Math.random() * 5;
+              const hue = Math.floor(Math.random() * 360);
+              
+              // Calculate translation with larger range
+              const translateX = (Math.random() * 400 - 200) + 'px';
+              const translateY = (Math.random() * 400 - 200) + 'px';
+
+              return (
+                <div 
+                  key={`move-${i}`} 
                   className="absolute w-[2px] h-[2px] rounded-full"
                   style={{
                     animation: `particleAnimation ${duration}s infinite`,
                     animationDelay: `${delay}s`,
                     backgroundColor: `hsla(${hue}, 100%, 50%, 0.7)`,
-                    top: `${Math.random() * 100}%`,
-                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 120}%`,
+                    left: `${Math.random() * 120}%`,
+                    '--translate-x': translateX,
+                    '--translate-y': translateY,
+                    transform: 'translate(-50%, -50%)', // Center each particle
                   }}
                 />
               );
             })}
           </div>
           
-          <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl relative z-10">
-            Master AI, ML & Deep Learning
-          </h1>
-          <p className="mt-6 text-xl text-blue-100 max-w-3xl relative z-10">
-            Your comprehensive learning platform for Artificial Intelligence, Machine Learning, and Deep Learning. Start your journey from basics to advanced concepts with structured learning paths.
-          </p>
-          <div className="mt-10 flex space-x-4 relative z-10">
-            <button
-              onClick={() => setIsRegisterModalOpen(true)}
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-base bg-blue-500 hover:bg-gray-700 transition-colors duration-200"
-            >
-              Start Learning
-            </button>
-            <Link 
-              to="/curriculum" 
-              className="inline-flex items-center px-6 py-3 border border-white text-base font-medium rounded-md text-white hover:bg-blue-800 transition-colors duration-200"
-            >
-              View Curriculum
-            </Link>
+          <div className="relative z-10">
+            <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+              Master AI, ML & Deep Learning
+            </h1>
+            <p className="mt-6 text-xl text-blue-100 max-w-3xl">
+              Your comprehensive learning platform for Artificial Intelligence, Machine Learning, and Deep Learning. Start your journey from basics to advanced concepts with structured learning paths.
+            </p>
+            <div className="mt-10 flex space-x-4">
+              <button
+                onClick={() => setIsRegisterModalOpen(true)}
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-base bg-blue-500 hover:bg-gray-700 transition-colors duration-200"
+              >
+                Start Learning
+              </button>
+              <Link 
+                to="/curriculum" 
+                className="inline-flex items-center px-6 py-3 border border-white text-base font-medium rounded-md text-white hover:bg-blue-800 transition-colors duration-200"
+              >
+                View Curriculum
+              </Link>
+            </div>
           </div>
         </div>
       </div>

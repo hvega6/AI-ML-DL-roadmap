@@ -27,7 +27,15 @@ export default {
       maxWidth: {
         '7xl': '80rem',
       },
-    },
+      keyframes: {
+        rotate: {
+          '100%': { transform: 'rotateY(360deg) rotateX(360deg)' }
+        }
+      },
+      animation: {
+        rotate: 'rotate 14s infinite linear'
+      }
+    }
   },
   plugins: [],
 }

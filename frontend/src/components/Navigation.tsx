@@ -7,7 +7,6 @@ import {
   AcademicCapIcon,
   BookOpenIcon,
   ChartBarIcon,
-  DocumentTextIcon,
   BookmarkIcon
 } from '@heroicons/react/24/outline';
 import { useTheme } from '../context/ThemeContext';
@@ -24,10 +23,10 @@ const Navigation: React.FC = () => {
 
   const navigation = [
     { name: 'Home', href: '/', icon: HomeIcon },
-    { name: 'Lessons', href: '/lessons', icon: BookOpenIcon, description: 'Start your learning journey' },
-    { name: 'What We Teach', href: '/curriculum', icon: AcademicCapIcon, description: 'Explore our curriculum' },
-    { name: 'Resources', href: '/resources', icon: BookmarkIcon, description: 'Additional learning materials' },
-    { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon, description: 'Track your progress' },
+    { name: 'Lessons', href: '/lessons', icon: BookOpenIcon },
+    { name: 'What We Teach', href: '/curriculum', icon: AcademicCapIcon },
+    { name: 'Resources', href: '/resources', icon: BookmarkIcon },
+    { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
   ];
 
   const isActive = (path: string) => {
@@ -54,7 +53,7 @@ const Navigation: React.FC = () => {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`group inline-flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                    className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-medium ${
                       isActive(item.href)
                         ? 'bg-blue-500 text-white'
                         : 'text-white hover:bg-blue-500 hover:text-white'
@@ -62,11 +61,6 @@ const Navigation: React.FC = () => {
                   >
                     <item.icon className="h-4 w-4 mr-2" />
                     <span>{item.name}</span>
-                    {item.description && (
-                      <div className="absolute hidden group-hover:block mt-2 bg-gray-800 text-white text-xs rounded-md px-2 py-1 whitespace-nowrap">
-                        {item.description}
-                      </div>
-                    )}
                   </Link>
                 ))}
               </div>
@@ -149,11 +143,6 @@ const Navigation: React.FC = () => {
                 <item.icon className="h-5 w-5 mr-2" />
                 <span>{item.name}</span>
               </div>
-              {item.description && (
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  {item.description}
-                </p>
-              )}
             </Link>
           ))}
           <div className="mt-4 space-y-2 px-3">

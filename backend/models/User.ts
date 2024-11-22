@@ -2,122 +2,86 @@ import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 export interface IUser extends Document {
-  username: string;
   email: string;
   password: string;
   role: 'student' | 'admin';
-  profile: {
-    firstName?: string;
-    lastName?: string;
-    bio?: string;
-    location?: string;
-    socialLinks?: {
-      github?: string;
-      linkedin?: string;
-      twitter?: string;
-    };
-  };
   preferences: {
-    notifications: boolean;
-    language: string;
     theme: 'light' | 'dark';
   };
-  stats: {
-    totalTimeSpent: number;
-    coursesCompleted: number;
-    lessonsCompleted: number;
-    averageQuizScore: number;
-    streakDays: number;
-    lastActive: Date;
+  progress: {
+    completedLessons: string[];
+    currentLesson: string | null;
+    quizScores: Array<{
+      quizId: string;
+      score: number;
+      dateTaken: Date;
+    }>;
   };
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
 const userSchema = new Schema<IUser>({
-  username: { 
-    type: String, 
-    required: true, 
-    unique: true,
-    trim: true,
-    minlength: 3 
-  },
   email: { 
     type: String, 
-    required: true, 
+    required: [true, 'Email is required'],
     unique: true,
     trim: true,
-    lowercase: true
+    lowercase: true,
+    validate: {
+      validator: function(v: string) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+      },
+      message: 'Please enter a valid email address'
+    }
   },
   password: { 
-    type: String,
-    required: true,
-    minlength: 6
+    type: String, 
+    required: [true, 'Password is required'],
+    minlength: [6, 'Password must be at least 6 characters long'],
+    validate: {
+      validator: function(v: string) {
+        // At least 6 chars, 1 uppercase, 1 lowercase, 1 number
+        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/.test(v);
+      },
+      message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+    }
   },
-  role: {
-    type: String,
+  role: { 
+    type: String, 
     enum: ['student', 'admin'],
     default: 'student'
   },
-  profile: {
-    firstName: String,
-    lastName: String,
-    bio: String,
-    location: String,
-    socialLinks: {
-      github: String,
-      linkedin: String,
-      twitter: String
-    }
-  },
   preferences: {
-    notifications: {
-      type: Boolean,
-      default: true
-    },
-    language: {
-      type: String,
-      default: 'en'
-    },
-    theme: {
-      type: String,
+    theme: { 
+      type: String, 
       enum: ['light', 'dark'],
       default: 'light'
     }
   },
-  stats: {
-    totalTimeSpent: {
-      type: Number,
-      default: 0
-    },
-    coursesCompleted: {
-      type: Number,
-      default: 0
-    },
-    lessonsCompleted: {
-      type: Number,
-      default: 0
-    },
-    averageQuizScore: {
-      type: Number,
-      default: 0
-    },
-    streakDays: {
-      type: Number,
-      default: 0
-    },
-    lastActive: {
-      type: Date,
-      default: Date.now
-    }
+  progress: {
+    completedLessons: [{ type: String }],
+    currentLesson: { type: String, default: null },
+    quizScores: [{
+      quizId: { type: String },
+      score: { type: Number },
+      dateTaken: { type: Date, default: Date.now }
+    }]
   }
+}, {
+  timestamps: true
 });
 
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
   try {
-    return await bcrypt.compare(candidatePassword, this.password);
+    if (!this.password) {
+      throw new Error('Password not set for user');
+    }
+    const isMatch = await bcrypt.compare(candidatePassword, this.password);
+    return isMatch;
   } catch (error) {
-    throw error;
+    console.error('Password comparison error:', error);
+    throw new Error('Error comparing passwords');
   }
 };
 
@@ -129,11 +93,13 @@ userSchema.pre('save', async function(next) {
 
   try {
     const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    const hashedPassword = await bcrypt.hash(this.password, salt);
+    this.password = hashedPassword;
     next();
   } catch (error) {
+    console.error('Password hashing error:', error);
     next(error as Error);
   }
 });
 
-export default mongoose.model<IUser>('User', userSchema);
+export const User = mongoose.model<IUser>('User', userSchema);

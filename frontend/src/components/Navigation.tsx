@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useHistory } from 'react-router-dom';
 import { 
   Bars3Icon as MenuIcon, 
   XMarkIcon as XIcon, 
@@ -7,9 +7,11 @@ import {
   AcademicCapIcon,
   BookOpenIcon,
   ChartBarIcon,
-  BookmarkIcon
+  BookmarkIcon,
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import Modal from './Modal';
 import Login from '../views/Login';
 import Register from '../views/Register';
@@ -18,22 +20,63 @@ const Navigation: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
-  const location = useLocation();
   const { isDarkMode, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
+  const history = useHistory();
+  const location = useLocation();
 
-  const navigation = [
+  const publicNavigation = [
     { name: 'Home', href: '/', icon: HomeIcon },
-    { name: 'Lessons', href: '/lessons', icon: BookOpenIcon },
     { name: 'What We Teach', href: '/curriculum', icon: AcademicCapIcon },
     { name: 'Resources', href: '/resources', icon: BookmarkIcon },
-    { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
   ];
+
+  const privateNavigation = [
+    { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
+    { name: 'Lessons', href: '/lessons', icon: BookOpenIcon },
+    { name: 'Resources', href: '/resources', icon: BookmarkIcon },
+  ];
+
+  const navigation = user ? privateNavigation : publicNavigation;
 
   const isActive = (path: string) => {
     if (path === '/' && location.pathname !== '/') {
       return false;
     }
     return location.pathname.startsWith(path);
+  };
+
+  // Redirect authenticated users to dashboard from public pages
+  useEffect(() => {
+    if (user) {
+      const publicPaths = ['/', '/curriculum'];
+      if (publicPaths.includes(location.pathname)) {
+        if (user.role === 'admin') {
+          history.push('/admin/dashboard');
+        } else {
+          history.push('/dashboard');
+        }
+      }
+    }
+  }, [user, location.pathname, history]);
+
+  // Redirect non-authenticated users to home from protected pages
+  useEffect(() => {
+    if (!user) {
+      const protectedPaths = ['/dashboard', '/admin/dashboard', '/lessons', '/resources'];
+      if (protectedPaths.some(path => location.pathname.startsWith(path))) {
+        history.push('/');
+      }
+    }
+  }, [user, location.pathname, history]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      history.push('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   return (
@@ -80,18 +123,31 @@ const Navigation: React.FC = () => {
             >
               {isDarkMode ? '🌞' : '🌙'}
             </button>
-            <button
-              onClick={() => setIsLoginModalOpen(true)}
-              className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-600"
-            >
-              Login
-            </button>
-            <button
-              onClick={() => setIsRegisterModalOpen(true)}
-              className="px-4 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-500 rounded-md hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-gray-600"
-            >
-              Register
-            </button>
+            
+            {user ? (
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600"
+              >
+                <ArrowRightOnRectangleIcon className="h-4 w-4 mr-2" />
+                Logout
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-600"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => setIsRegisterModalOpen(true)}
+                  className="px-4 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-500 rounded-md hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-gray-600"
+                >
+                  Register
+                </button>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -146,24 +202,36 @@ const Navigation: React.FC = () => {
             </Link>
           ))}
           <div className="mt-4 space-y-2 px-3">
-            <button
-              onClick={() => {
-                setIsOpen(false);
-                setIsLoginModalOpen(true);
-              }}
-              className="w-full bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-600"
-            >
-              Login
-            </button>
-            <button
-              onClick={() => {
-                setIsOpen(false);
-                setIsRegisterModalOpen(true);
-              }}
-              className="w-full px-4 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-500 rounded-md hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-gray-600"
-            >
-              Register
-            </button>
+            {user ? (
+              <button
+                onClick={handleLogout}
+                className="w-full inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600"
+              >
+                <ArrowRightOnRectangleIcon className="h-4 w-4 mr-2" />
+                Logout
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    setIsLoginModalOpen(true);
+                  }}
+                  className="w-full bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-600"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    setIsRegisterModalOpen(true);
+                  }}
+                  className="w-full px-4 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-500 rounded-md hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-gray-600"
+                >
+                  Register
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

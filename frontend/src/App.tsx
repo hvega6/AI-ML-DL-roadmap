@@ -3,8 +3,10 @@ import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ParticleProvider } from './context/ParticleContext';
+import PrivateRoute from './components/PrivateRoute';
 import Home from './views/Home';
-import Dashboard from './components/Dashboard';
+import Login from './views/Login';
+import Dashboard from './views/Dashboard';
 import Navigation from './components/Navigation';
 import Lesson from './views/Lesson';
 import Lessons from './views/Lessons';
@@ -22,13 +24,14 @@ const App: React.FC = () => {
               <Switch>
                 {/* Public Routes */}
                 <Route exact path="/" component={Home} />
-                <Route path="/dashboard" component={Dashboard} />
-                
-                {/* Learning Routes */}
-                <Route exact path="/lessons" component={Lessons} />
-                <Route path="/lesson/:id" component={Lesson} />
+                <Route path="/login" component={Login} />
                 <Route path="/curriculum" component={Curriculum} />
                 <Route path="/resources" component={Resources} />
+                
+                {/* Protected Routes */}
+                <PrivateRoute path="/dashboard" component={Dashboard} />
+                <PrivateRoute exact path="/lessons" component={Lessons} />
+                <PrivateRoute path="/lesson/:id" component={Lesson} />
               </Switch>
             </div>
           </AuthProvider>

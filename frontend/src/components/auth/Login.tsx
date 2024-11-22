@@ -37,11 +37,8 @@ const Login: React.FC<LoginProps> = ({ isModal, onClose, onSwitchToRegister }) =
       setLoading(true);
       const response = await login(formData);
       
-      if (response?.user?.role === 'admin') {
-        history.push('/admin/dashboard');
-      } else {
-        history.push('/dashboard');
-      }
+      // Always redirect to dashboard after successful login
+      history.push('/dashboard');
 
       if (isModal && onClose) {
         onClose();

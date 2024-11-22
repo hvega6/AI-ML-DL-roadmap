@@ -1,184 +1,323 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import authService from '../services/authService';
+import axios from 'axios';
 import { 
-  ChartBarIcon, 
+  FireIcon, 
+  AcademicCapIcon, 
   ClockIcon, 
-  AcademicCapIcon,
-  BoltIcon
-} from '@heroicons/react/24/outline';
-import { curriculum } from '../data/curriculum';
+  CheckCircleIcon 
+} from '@heroicons/react/24/solid';
 
-interface CourseProgress {
-  name: string;
-  status: 'completed' | 'in-progress' | 'locked';
-  lastAccessed: string;
-  progress: number;
+// Register all Chart.js components
+Chart.register(...registerables);
+
+interface UserProgress {
+  lessonsCompleted: number;
+  totalLessons: number;
+  timeSpentLearning: number;
+  skillProgress: { [key: string]: number };
+  currentStreak: number;
+  coursesCompleted: number;
+  totalCourses: number;
 }
 
 const Dashboard: React.FC = () => {
   const { isDarkMode } = useTheme();
+  const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const recentCourses = curriculum.lessons.slice(0, 3).map(lesson => ({
-    name: lesson.title,
-    status: 'in-progress' as const,
-    lastAccessed: '1 day ago',
-    progress: 60
-  }));
+  // Refs for chart canvases
+  const lessonChartRef = useRef<HTMLCanvasElement>(null);
+  const skillChartRef = useRef<HTMLCanvasElement>(null);
+  const timeChartRef = useRef<HTMLCanvasElement>(null);
+
+  // Chart instances
+  const [lessonChart, setLessonChart] = useState<Chart | null>(null);
+  const [skillChart, setSkillChart] = useState<Chart | null>(null);
+  const [timeChart, setTimeChart] = useState<Chart | null>(null);
+
+  useEffect(() => {
+    fetchUserProgress();
+  }, []);
+
+  const fetchUserProgress = async () => {
+    try {
+      console.log('Fetching user progress...');
+      // Mock data for development if backend is not ready
+      const mockProgress: UserProgress = {
+        lessonsCompleted: 15,
+        totalLessons: 50,
+        timeSpentLearning: 42,
+        skillProgress: {
+          'Python': 75,
+          'Machine Learning': 60,
+          'Deep Learning': 45,
+          'Data Science': 55
+        },
+        currentStreak: 7,
+        coursesCompleted: 3,
+        totalCourses: 10
+      };
+
+      // Uncomment this when backend is ready
+      // const response = await axios.get('/api/user/progress', {
+      //   headers: { 
+      //     'Authorization': `Bearer ${authService.getToken()}` 
+      //   }
+      // });
+      
+      // setUserProgress(response.data);
+      setUserProgress(mockProgress);
+      console.log('User progress fetched:', mockProgress);
+    } catch (error) {
+      console.error('Error fetching user progress:', error);
+      setError('Failed to fetch user progress');
+    }
+  };
+
+  // Create chart configurations
+  const createChartConfig = (
+    type: ChartConfiguration['type'], 
+    data: ChartConfiguration['data'], 
+    options?: ChartConfiguration['options']
+  ): ChartConfiguration => ({
+    type,
+    data,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: data.datasets[0].label || 'Chart',
+          color: isDarkMode ? '#FFFFFF' : '#000000'
+        },
+        legend: {
+          labels: {
+            color: isDarkMode ? '#FFFFFF' : '#000000'
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: isDarkMode ? '#FFFFFF' : '#000000'
+          },
+          grid: {
+            color: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+          }
+        },
+        y: {
+          ticks: {
+            color: isDarkMode ? '#FFFFFF' : '#000000'
+          },
+          grid: {
+            color: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+          }
+        }
+      },
+      ...options
+    }
+  });
+
+  // Create and update charts when user progress changes
+  useEffect(() => {
+    if (!userProgress) return;
+
+    console.log('Creating charts...');
+
+    // Lesson Completion Chart
+    if (lessonChartRef.current) {
+      const ctx = lessonChartRef.current.getContext('2d');
+      if (ctx) {
+        // Destroy existing chart if it exists
+        if (lessonChart) lessonChart.destroy();
+
+        const newLessonChart = new Chart(ctx, createChartConfig(
+          'doughnut',
+          {
+            labels: ['Completed', 'Remaining'],
+            datasets: [{
+              label: 'Lesson Completion',
+              data: [
+                userProgress.lessonsCompleted, 
+                userProgress.totalLessons - userProgress.lessonsCompleted
+              ],
+              backgroundColor: [
+                isDarkMode ? '#10B981' : '#3B82F6', 
+                isDarkMode ? '#6366F1' : '#93C5FD'
+              ]
+            }]
+          }
+        ));
+        setLessonChart(newLessonChart);
+        console.log('Lesson chart created');
+      }
+    }
+
+    // Skill Progress Chart
+    if (skillChartRef.current) {
+      const ctx = skillChartRef.current.getContext('2d');
+      if (ctx) {
+        // Destroy existing chart if it exists
+        if (skillChart) skillChart.destroy();
+
+        const newSkillChart = new Chart(ctx, createChartConfig(
+          'bar',
+          {
+            labels: Object.keys(userProgress.skillProgress),
+            datasets: [{
+              label: 'Skill Proficiency',
+              data: Object.values(userProgress.skillProgress),
+              backgroundColor: isDarkMode ? '#10B981' : '#3B82F6'
+            }]
+          }
+        ));
+        setSkillChart(newSkillChart);
+        console.log('Skill chart created');
+      }
+    }
+
+    // Learning Time Chart
+    if (timeChartRef.current) {
+      const ctx = timeChartRef.current.getContext('2d');
+      if (ctx) {
+        // Destroy existing chart if it exists
+        if (timeChart) timeChart.destroy();
+
+        const newTimeChart = new Chart(ctx, createChartConfig(
+          'line',
+          {
+            labels: ['Total Learning Time'],
+            datasets: [{
+              label: 'Hours Spent Learning',
+              data: [userProgress.timeSpentLearning],
+              borderColor: isDarkMode ? '#10B981' : '#3B82F6',
+              backgroundColor: isDarkMode ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)'
+            }]
+          }
+        ));
+        setTimeChart(newTimeChart);
+        console.log('Time chart created');
+      }
+    }
+  }, [userProgress, isDarkMode]);
+
+  if (error) {
+    return (
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} p-8 flex items-center justify-center`}>
+        <div className={`text-center p-6 rounded-lg ${isDarkMode ? 'bg-red-900 text-white' : 'bg-red-100 text-red-900'}`}>
+          <h2 className="text-2xl font-bold mb-4">Error</h2>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-blue-50'}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-blue-900'}`}>
-            Welcome back, User!
-          </h1>
-          <p className={`mt-2 ${isDarkMode ? 'text-gray-400' : 'text-blue-600'}`}>
-            Continue your learning journey
-          </p>
-        </div>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} p-8`}>
+      <div className="container mx-auto">
+        <h1 className={`text-3xl font-bold mb-8 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          Dashboard
+        </h1>
 
-        {/* Progress Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Overall Progress */}
-          <div className={`p-6 rounded-lg shadow-lg ${
-            isDarkMode ? 'bg-gray-800' : 'bg-white'
-          }`}>
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-full ${
-                isDarkMode ? 'bg-blue-900' : 'bg-blue-100'
-              }`}>
-                <ChartBarIcon className={`h-6 w-6 ${
-                  isDarkMode ? 'text-blue-400' : 'text-blue-600'
-                }`} />
+        {userProgress ? (
+          <>
+            {/* Quick Stats Section */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              {/* Streak */}
+              <div className={`p-4 rounded-lg shadow-md flex items-center ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <FireIcon className={`h-10 w-10 mr-4 ${isDarkMode ? 'text-orange-500' : 'text-orange-600'}`} />
+                <div>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Current Streak</p>
+                  <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {userProgress.currentStreak} Days
+                  </p>
+                </div>
               </div>
-              <span className={`text-2xl font-bold ${
-                isDarkMode ? 'text-white' : 'text-blue-600'
-              }`}>50%</span>
-            </div>
-            <h3 className={`text-sm font-medium ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-600'
-            }`}>Overall Progress</h3>
-          </div>
 
-          {/* Time Spent */}
-          <div className={`p-6 rounded-lg shadow-lg ${
-            isDarkMode ? 'bg-gray-800' : 'bg-white'
-          }`}>
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-full ${
-                isDarkMode ? 'bg-green-900' : 'bg-green-100'
-              }`}>
-                <ClockIcon className={`h-6 w-6 ${
-                  isDarkMode ? 'text-green-400' : 'text-green-600'
-                }`} />
+              {/* Courses Completed */}
+              <div className={`p-4 rounded-lg shadow-md flex items-center ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <AcademicCapIcon className={`h-10 w-10 mr-4 ${isDarkMode ? 'text-green-500' : 'text-green-600'}`} />
+                <div>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Courses Completed</p>
+                  <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {userProgress.coursesCompleted}/{userProgress.totalCourses}
+                  </p>
+                </div>
               </div>
-              <span className={`text-2xl font-bold ${
-                isDarkMode ? 'text-white' : 'text-green-600'
-              }`}>24h</span>
-            </div>
-            <h3 className={`text-sm font-medium ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-600'
-            }`}>Time Spent</h3>
-          </div>
 
-          {/* Completed Courses */}
-          <div className={`p-6 rounded-lg shadow-lg ${
-            isDarkMode ? 'bg-gray-800' : 'bg-white'
-          }`}>
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-full ${
-                isDarkMode ? 'bg-purple-900' : 'bg-purple-100'
-              }`}>
-                <AcademicCapIcon className={`h-6 w-6 ${
-                  isDarkMode ? 'text-purple-400' : 'text-purple-600'
-                }`} />
+              {/* Total Learning Time */}
+              <div className={`p-4 rounded-lg shadow-md flex items-center ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <ClockIcon className={`h-10 w-10 mr-4 ${isDarkMode ? 'text-blue-500' : 'text-blue-600'}`} />
+                <div>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Learning Time</p>
+                  <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {userProgress.timeSpentLearning} hrs
+                  </p>
+                </div>
               </div>
-              <span className={`text-2xl font-bold ${
-                isDarkMode ? 'text-white' : 'text-purple-600'
-              }`}>3</span>
-            </div>
-            <h3 className={`text-sm font-medium ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-600'
-            }`}>Completed Courses</h3>
-          </div>
 
-          {/* Streak */}
-          <div className={`p-6 rounded-lg shadow-lg ${
-            isDarkMode ? 'bg-gray-800' : 'bg-white'
-          }`}>
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-full ${
-                isDarkMode ? 'bg-yellow-900' : 'bg-yellow-100'
-              }`}>
-                <BoltIcon className={`h-6 w-6 ${
-                  isDarkMode ? 'text-yellow-400' : 'text-yellow-600'
-                }`} />
+              {/* Lessons Completed */}
+              <div className={`p-4 rounded-lg shadow-md flex items-center ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <CheckCircleIcon className={`h-10 w-10 mr-4 ${isDarkMode ? 'text-purple-500' : 'text-purple-600'}`} />
+                <div>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Lessons Completed</p>
+                  <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    {userProgress.lessonsCompleted}/{userProgress.totalLessons}
+                  </p>
+                </div>
               </div>
-              <span className={`text-2xl font-bold ${
-                isDarkMode ? 'text-white' : 'text-yellow-600'
-              }`}>5</span>
             </div>
-            <h3 className={`text-sm font-medium ${
-              isDarkMode ? 'text-gray-300' : 'text-gray-600'
-            }`}>Day Streak</h3>
-          </div>
-        </div>
 
-        {/* Recent Courses */}
-        <div className={`rounded-lg shadow-lg ${
-          isDarkMode ? 'bg-gray-800' : 'bg-white'
-        } p-6 mb-8`}>
-          <h2 className={`text-xl font-bold mb-6 ${
-            isDarkMode ? 'text-white' : 'text-blue-900'
-          }`}>Recent Courses</h2>
-          <div className="space-y-4">
-            {recentCourses.map((course, index) => (
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {/* Lesson Completion Chart */}
+              <div className={`p-6 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <div className="h-64">
+                  <canvas ref={lessonChartRef}></canvas>
+                </div>
+              </div>
+
+              {/* Skill Progress Chart */}
+              <div className={`p-6 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <div className="h-64">
+                  <canvas ref={skillChartRef}></canvas>
+                </div>
+              </div>
+
+              {/* Learning Time Chart */}
+              <div className={`p-6 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                <div className="h-64">
+                  <canvas ref={timeChartRef}></canvas>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Button */}
+            <div className="mt-8 text-center">
               <Link 
-                key={index} 
-                to={`/lesson/${index + 1}`}
-                className={`block p-4 rounded-lg ${
-                  isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-blue-50 hover:bg-blue-100'
+                to="/lessons" 
+                className={`px-6 py-3 rounded-lg ${
+                  isDarkMode 
+                    ? 'bg-blue-700 hover:bg-blue-800 text-white' 
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
                 } transition-colors duration-200`}
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className={`font-medium ${
-                      isDarkMode ? 'text-white' : 'text-blue-900'
-                    }`}>{course.name}</h3>
-                    <p className={`text-sm ${
-                      isDarkMode ? 'text-gray-400' : 'text-blue-600'
-                    }`}>Last accessed: {course.lastAccessed}</p>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-32 bg-gray-200 rounded-full h-2.5">
-                      <div
-                        style={{ width: `${course.progress}%` }}
-                        className="bg-blue-600 h-2.5 rounded-full"
-                      ></div>
-                    </div>
-                    <span className={`text-sm font-medium ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                    }`}>{course.progress}%</span>
-                  </div>
-                </div>
+                View All Lessons
               </Link>
-            ))}
+            </div>
+          </>
+        ) : (
+          <div className="text-center">
+            <p className={`${isDarkMode ? 'text-white' : 'text-gray-600'}`}>
+              Loading user progress...
+            </p>
           </div>
-        </div>
-
-        {/* Continue Learning Button */}
-        <Link
-          to="/lessons"
-          className={`inline-flex items-center px-6 py-3 text-base font-medium rounded-md ${
-            isDarkMode 
-              ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-              : 'bg-blue-600 hover:bg-blue-700 text-white'
-          } transition-colors duration-200`}
-        >
-          View All Lessons
-        </Link>
+        )}
       </div>
     </div>
   );

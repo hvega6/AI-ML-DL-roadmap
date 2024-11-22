@@ -14,61 +14,65 @@ export interface LoginData {
 }
 
 export interface AuthResponse {
-  token: string;
+  message: string;
   user: {
     id: string;
     username: string;
     email: string;
-    role: string;
+    role?: string;
   };
+  accessToken: string;
+  refreshToken: string;
 }
 
 const authService = {
   register: async (data: RegisterData): Promise<AuthResponse> => {
     try {
       const response = await axios.post(`${API_URL}/register`, data);
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      }
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Registration failed');
+      console.error('Registration error details:', error.response?.data);
+      const message = error.response?.data?.message || 'Registration failed';
+      const errors = error.response?.data?.errors || [];
+      throw new Error(errors.length > 0 ? errors[0] : message);
     }
   },
 
   login: async (data: LoginData): Promise<AuthResponse> => {
     try {
       const response = await axios.post(`${API_URL}/login`, data);
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      }
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Login failed');
+      const message = error.response?.data?.message || error.message;
+      const errors = error.response?.data?.errors || [];
+      throw new Error(errors.length > 0 ? errors.join(', ') : message);
     }
   },
 
-  logout: () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  refreshToken: async (refreshToken: string): Promise<{ accessToken: string }> => {
+    try {
+      const response = await axios.post(`${API_URL}/refresh-token`, { refreshToken });
+      return response.data;
+    } catch (error: any) {
+      throw new Error('Failed to refresh token');
+    }
   },
 
   getCurrentUser: () => {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      return JSON.parse(userStr);
-    }
-    return null;
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
   },
 
   getToken: () => {
-    return localStorage.getItem('token');
+    return localStorage.getItem('accessToken');
+  },
+
+  getRefreshToken: () => {
+    return localStorage.getItem('refreshToken');
   },
 
   isAuthenticated: () => {
-    return !!localStorage.getItem('token');
+    return !!localStorage.getItem('accessToken');
   }
 };
 

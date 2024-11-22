@@ -35,24 +35,21 @@ const Login: React.FC<LoginProps> = ({ isModal, onClose, onSwitchToRegister }) =
     try {
       setError('');
       setLoading(true);
-      await login(formData);
+      const response = await login(formData);
       
-      if (isModal && onClose) {
-        onClose(); // Close the modal first
-      }
-
-      // Redirect based on user role
-      if (isAdmin()) {
+      if (response?.user?.role === 'admin') {
         history.push('/admin/dashboard');
       } else {
         history.push('/dashboard');
       }
+
+      if (isModal && onClose) {
+        onClose();
+      }
     } catch (err: any) {
       let errorMessage = 'Failed to login';
-      if (err.response?.status === 401) {
-        errorMessage = 'Invalid email or password';
-      } else if (err.response?.status === 403) {
-        errorMessage = 'Account is not authorized';
+      if (err.message) {
+        errorMessage = err.message;
       }
       setError(errorMessage);
     } finally {
@@ -60,110 +57,80 @@ const Login: React.FC<LoginProps> = ({ isModal, onClose, onSwitchToRegister }) =
     }
   };
 
-  const handleSwitchToRegister = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (onSwitchToRegister) {
-      onSwitchToRegister();
-    }
-  };
+  const containerClasses = `p-6 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} ${
+    isModal ? 'rounded-lg shadow-xl' : 'min-h-screen'
+  }`;
 
-  const containerClasses = isModal
-    ? 'px-6 py-4'
-    : 'min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8';
+  const inputClasses = `w-full p-3 rounded border ${
+    isDarkMode
+      ? 'bg-gray-700 border-gray-600 text-white'
+      : 'bg-gray-50 border-gray-300 text-gray-900'
+  } focus:outline-none focus:ring-2 focus:ring-blue-500`;
 
-  const formClasses = isModal
-    ? 'w-full'
-    : 'max-w-md w-full space-y-8';
+  const buttonClasses = `w-full py-3 px-4 rounded font-semibold ${
+    loading
+      ? 'bg-gray-400 cursor-not-allowed'
+      : 'bg-blue-600 hover:bg-blue-700 text-white'
+  } transition duration-200`;
+
+  const linkClasses = `text-blue-600 hover:text-blue-800 ${
+    isDarkMode ? 'text-blue-400 hover:text-blue-300' : ''
+  }`;
 
   return (
     <div className={containerClasses}>
-      <div className={formClasses}>
-        <div>
-          <h2 className={`text-center text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            Welcome Back
-          </h2>
-          <p className={`mt-2 text-center text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-            Sign in to continue your learning journey
-          </p>
-        </div>
+      <div className="max-w-md mx-auto">
+        <h2 className="text-2xl font-bold mb-6">Login to Your Account</h2>
         {error && (
-          <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded text-sm" role="alert">
-            <span className="block sm:inline">{error}</span>
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
           </div>
         )}
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="email" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              Email address
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="email" className="block mb-2">
+              Email
             </label>
             <input
+              type="email"
               id="email"
               name="email"
-              type="email"
-              required
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                isDarkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
-              placeholder="Enter your email"
               value={formData.email}
               onChange={handleChange}
+              required
+              className={inputClasses}
+              disabled={loading}
             />
           </div>
-          <div>
-            <label htmlFor="password" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+          <div className="mb-6">
+            <label htmlFor="password" className="block mb-2">
               Password
             </label>
             <input
+              type="password"
               id="password"
               name="password"
-              type="password"
-              required
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                isDarkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
-              placeholder="Enter your password"
               value={formData.password}
               onChange={handleChange}
+              required
+              className={inputClasses}
+              disabled={loading}
             />
           </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                loading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
-              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200`}
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Signing in...
-                </>
-              ) : (
-                'Sign in'
-              )}
-            </button>
-          </div>
-
-          {isModal && (
-            <div className="mt-4 text-center">
-              <button
-                onClick={handleSwitchToRegister}
-                className={`text-sm ${isDarkMode ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-500'}`}
-              >
-                Don't have an account? Sign up
-              </button>
-            </div>
-          )}
+          <button type="submit" className={buttonClasses} disabled={loading}>
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
         </form>
+        {!isModal && (
+          <div className="mt-4 text-center">
+            <p>
+              Don't have an account?{' '}
+              <button onClick={onSwitchToRegister} className={linkClasses}>
+                Register here
+              </button>
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -253,7 +253,7 @@ const Home: React.FC = () => {
                   {isImageExpanded && (
                     <div className="mt-4">
                       <img
-                        src="/src/public/main/infography.png"
+                        src="/infography.png"
                         alt="AI Learning Roadmap Infographic"
                         className="w-full h-auto rounded-lg shadow-sm"
                       />
@@ -267,7 +267,7 @@ const Home: React.FC = () => {
                 <div className="relative group cursor-pointer p-4">
                   <div className="transform-gpu transition-transform duration-300 ease-out group-hover:scale-105">
                     <img
-                      src="/src/public/main/infography.png"
+                      src="/infography.png"
                       alt="AI Learning Roadmap Infographic"
                       className="mx-auto w-full h-auto rounded-lg shadow-lg"
                       style={{ maxWidth: '1300px' }}

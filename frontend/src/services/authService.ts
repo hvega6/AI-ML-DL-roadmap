@@ -74,36 +74,39 @@ export interface AuthResponse {
 }
 
 const authService = {
-  register: async (data: RegisterData): Promise<AuthResponse> => {
+  async register(data: RegisterData): Promise<AuthResponse> {
     try {
       const response = await axios.post(`${API_URL}/register`, data);
-      const { accessToken, refreshToken } = response.data;
+      const { accessToken, refreshToken, user } = response.data;
       
+      // Store tokens
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       
       return response.data;
     } catch (error: any) {
-      console.error('Registration error:', error.response?.data);
-      const message = error.response?.data?.message || 'Registration failed';
-      const errors = error.response?.data?.errors || [];
-      throw new Error(errors.length > 0 ? errors[0] : message);
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw error;
     }
   },
 
-  login: async (data: LoginData): Promise<AuthResponse> => {
+  async login(data: LoginData): Promise<AuthResponse> {
     try {
       const response = await axios.post(`${API_URL}/login`, data);
-      const { accessToken, refreshToken } = response.data;
+      const { accessToken, refreshToken, user } = response.data;
       
+      // Store tokens
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       
       return response.data;
     } catch (error: any) {
-      const message = error.response?.data?.message || error.message;
-      const errors = error.response?.data?.errors || [];
-      throw new Error(errors.length > 0 ? errors.join(', ') : message);
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw error;
     }
   },
 

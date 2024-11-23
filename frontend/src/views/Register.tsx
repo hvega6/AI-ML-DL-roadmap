@@ -103,12 +103,23 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }
     setIsLoading(true);
 
     try {
-      await register(formData, isModal);
-      console.log('Registration successful');
+      const response = await register(formData);
+      console.log('Registration successful:', response);
+      
+      // Clear form data
+      setFormData({
+        email: '',
+        password: '',
+        confirmPassword: ''
+      });
       
       if (isModal) {
-        if (onClose) onClose();
-        if (onSwitchToLogin) onSwitchToLogin();
+        if (onSwitchToLogin) {
+          onSwitchToLogin();
+        }
+        if (onClose) {
+          onClose();
+        }
       } else {
         history.push('/login');
       }

@@ -47,20 +47,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Registering user:', data.email);
       const response = await authService.register(data);
       
-      // Store tokens
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
-      localStorage.setItem('user', JSON.stringify(response.user));
-      
-      // Update state
-      setUser(response.user);
-      setIsAuthenticated(true);
-      
-      console.log('Registration successful:', response.user.email);
+      // Don't set user on registration - they need to login first
+      console.log('Registration successful, redirecting to login');
       return response;
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err.message || 'Registration failed');
+      setError(err.message);
       throw err;
     } finally {
       setIsLoading(false);
@@ -71,23 +63,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
       setError(null);
-      console.log('Logging in user:', data.email);
       const response = await authService.login(data);
       
-      // Store tokens
-      localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
-      localStorage.setItem('user', JSON.stringify(response.user));
-      
-      // Update state
+      // Set user and authentication state
       setUser(response.user);
       setIsAuthenticated(true);
-      
-      console.log('Login successful:', response.user.email);
       return response;
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.message || 'Login failed');
+      setError(err.message);
       throw err;
     } finally {
       setIsLoading(false);

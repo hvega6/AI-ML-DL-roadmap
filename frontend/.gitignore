@@ -35,6 +35,15 @@ dist-ssr
 /build
 /dist
 
+# Compiled JavaScript
+src/**/*.js
+src/**/*.js.map
+!src/**/*.config.js
+
+# Build output
+dist
+build
+
 # Testing
 /coverage
 

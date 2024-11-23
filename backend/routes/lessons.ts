@@ -1,100 +1,131 @@
-import express, { Request, Response, NextFunction } from 'express';
-import { Lesson, ILesson } from '../models/Lesson';
+import express, { Request, Response } from 'express';
+import mongoose from 'mongoose';
+import { ILesson } from '../models/Lesson';
+const Lesson = mongoose.model<ILesson>('Lesson');
 import authMiddleware from '../middleware/auth';
 
 const router = express.Router();
+const protectedRouter = express.Router();
+
+interface LessonParams {
+  id?: string;
+}
+
+interface CreateLessonBody {
+  title: string;
+  description: string;
+  courseId: string;
+  order: number;
+  content: {
+    type: 'text' | 'video' | 'code' | 'quiz';
+    data: string;
+    duration?: number;
+  }[];
+  resources?: {
+    title: string;
+    url: string;
+    type: 'pdf' | 'github' | 'external';
+    description?: string;
+  }[];
+  quiz?: {
+    questions: {
+      question: string;
+      options: string[];
+      correctAnswer: number;
+      explanation: string;
+      points: number;
+    }[];
+    passingScore: number;
+    timeLimit?: number;
+  };
+  prerequisites?: string[];
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+}
+
+type AsyncRequestHandler<P = {}, ResBody = any, ReqBody = any> = (
+  req: Request<P, ResBody, ReqBody>,
+  res: Response<ResBody>
+) => Promise<void>;
 
 // Get all lessons
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+const getAllLessons: AsyncRequestHandler = async (req, res) => {
   try {
-    const lessons = await Lesson.find().sort({ order: 1 });
-    return res.json(lessons);
+    const lessons = await Lesson.find();
+    res.json(lessons);
   } catch (error) {
-    next(error);
+    console.error('Get all lessons error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-});
+};
 
-// Get a single lesson
-router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+// Get lesson by ID
+const getLessonById: AsyncRequestHandler<LessonParams> = async (req, res) => {
   try {
     const lesson = await Lesson.findById(req.params.id);
     if (!lesson) {
-      return res.status(404).json({
-        message: 'Lesson not found',
-        errors: ['The requested lesson does not exist']
-      });
+      res.status(404).json({ message: 'Lesson not found' });
+      return;
     }
-    return res.json(lesson);
+    res.json(lesson);
   } catch (error) {
-    next(error);
+    console.error('Get lesson error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-});
+};
 
-// Create a lesson
-router.post('/', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+// Create new lesson (admin only)
+const createLesson: AsyncRequestHandler<{}, any, CreateLessonBody> = async (req, res) => {
   try {
-    const { title, content, order, quiz } = req.body;
-    
-    if (!title || !content) {
-      return res.status(400).json({
-        message: 'Missing required fields',
-        errors: ['Title and content are required']
-      });
-    }
-
-    const lesson = await Lesson.create({
-      title,
-      content,
-      order,
-      quiz: quiz || []
-    }) as ILesson;
-
-    return res.status(201).json(lesson);
+    const lesson = new Lesson(req.body);
+    await lesson.save();
+    res.status(201).json(lesson);
   } catch (error) {
-    next(error);
+    console.error('Create lesson error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-});
+};
 
-// Update a lesson
-router.put('/:id', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+// Update lesson (admin only)
+const updateLesson: AsyncRequestHandler<LessonParams, any, Partial<CreateLessonBody>> = async (req, res) => {
   try {
-    const { id } = req.params;
-    const updatedLesson = await Lesson.findByIdAndUpdate(
-      id,
-      { ...req.body },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedLesson) {
-      return res.status(404).json({
-        message: 'Lesson not found',
-        errors: ['The requested lesson does not exist']
-      });
+    const lesson = await Lesson.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!lesson) {
+      res.status(404).json({ message: 'Lesson not found' });
+      return;
     }
-
-    return res.json(updatedLesson);
+    res.json(lesson);
   } catch (error) {
-    next(error);
+    console.error('Update lesson error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-});
+};
 
-// Delete a lesson
-router.delete('/:id', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+// Delete lesson (admin only)
+const deleteLesson: AsyncRequestHandler<LessonParams> = async (req, res) => {
   try {
-    const { id } = req.params;
-    const deletedLesson = await Lesson.findByIdAndDelete(id);
-
-    if (!deletedLesson) {
-      return res.status(404).json({
-        message: 'Lesson not found',
-        errors: ['The requested lesson does not exist']
-      });
+    const lesson = await Lesson.findByIdAndDelete(req.params.id);
+    if (!lesson) {
+      res.status(404).json({ message: 'Lesson not found' });
+      return;
     }
-
-    return res.json({ message: 'Lesson deleted successfully' });
+    res.json({ message: 'Lesson deleted successfully' });
   } catch (error) {
-    next(error);
+    console.error('Delete lesson error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-});
+};
+
+// Public routes
+router.get('/', getAllLessons);
+router.get('/:id', getLessonById);
+
+// Protected routes
+protectedRouter.use(authMiddleware as express.RequestHandler);
+
+protectedRouter.post('/', createLesson as express.RequestHandler);
+protectedRouter.put('/:id', updateLesson as express.RequestHandler);
+protectedRouter.delete('/:id', deleteLesson as express.RequestHandler);
+
+router.use(protectedRouter);
 
 export default router;

@@ -16,6 +16,7 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }
   const { isDarkMode } = useTheme();
   
   const [formData, setFormData] = useState({
+    username: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -127,6 +128,7 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }
       
       // Clear form data
       setFormData({
+        username: '',
         email: '',
         password: '',
         confirmPassword: ''
@@ -175,6 +177,26 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }
         )}
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="username" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              Username
+            </label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              required
+              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+                isDarkMode 
+                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+              }`}
+              placeholder="Enter your username"
+            />
+          </div>
+
           <div>
             <label htmlFor="email" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               Email address

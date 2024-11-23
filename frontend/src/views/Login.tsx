@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useHistory, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -13,6 +13,7 @@ interface LoginProps {
 
 interface LocationState {
   from?: { pathname: string };
+  returnTo?: string;
 }
 
 interface ValidationErrors {
@@ -23,7 +24,7 @@ interface ValidationErrors {
 const Login: React.FC<LoginProps> = ({ isModal, onClose, onSwitchToRegister }) => {
   const history = useHistory();
   const location = useLocation<LocationState>();
-  const { login } = useAuth();
+  const { login, user, logout } = useAuth();
   const { isDarkMode } = useTheme();
   
   const [formData, setFormData] = useState({
@@ -33,8 +34,42 @@ const Login: React.FC<LoginProps> = ({ isModal, onClose, onSwitchToRegister }) =
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setSubmitting] = useState(false);
 
-  const { from } = location.state || { from: { pathname: "/dashboard" } };
+  // Handle redirection after successful login
+  useEffect(() => {
+    if (user) {
+      // Get the return path from location state or default to dashboard
+      const returnPath = location.state?.returnTo;
+      const fromPath = location.state?.from?.pathname;
+      
+      if (isModal && onClose) {
+        onClose();
+      } else {
+        // Priority order for redirection:
+        // 1. Specific return path if provided
+        // 2. Previous location path if it exists
+        // 3. Role-based dashboard as default
+        const redirectTo = returnPath || fromPath || (user.role === 'admin' ? '/admin/dashboard' : '/dashboard');
+        history.push(redirectTo);
+      }
+    }
+  }, [user, history, location.state, isModal, onClose]);
+
+  // Handle logout redirection
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Get current path before logout
+      const currentPath = location.pathname;
+      // If logging out from resources page or any other page, redirect to home
+      if (currentPath === '/resources' || currentPath !== '/') {
+        history.push('/');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -49,16 +84,18 @@ const Login: React.FC<LoginProps> = ({ isModal, onClose, onSwitchToRegister }) =
     setIsLoading(true);
 
     try {
-      await login(formData, isModal);
+      const userData = await login(formData);
+      console.log('Login successful, user:', userData);
       
-      if (isModal && onClose) {
-        onClose();
-      } else {
-        // Redirect to the page they came from, or dashboard
-        history.replace(from);
-      }
+      // Get the return path from location state or default to dashboard
+      const { from } = location.state as LocationState || { from: { pathname: '/dashboard' } };
+      console.log('Redirecting to:', from.pathname);
+      
+      // Use replace instead of push to avoid breaking the back button
+      history.replace(from.pathname);
     } catch (err: any) {
-      setError(err.message || 'An error occurred during login');
+      console.error('Login error:', err);
+      setError(err.message || 'Failed to login');
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +106,9 @@ const Login: React.FC<LoginProps> = ({ isModal, onClose, onSwitchToRegister }) =
     if (isModal && onSwitchToRegister) {
       onSwitchToRegister();
     } else {
-      history.push('/register');
+      // Preserve the return path when switching to register
+      const returnPath = location.state?.returnTo;
+      history.push('/register', { returnTo: returnPath });
     }
   };
 
@@ -99,6 +138,7 @@ const Login: React.FC<LoginProps> = ({ isModal, onClose, onSwitchToRegister }) =
               <div className="text-sm text-red-700">{error}</div>
             </div>
           )}
+
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -220,7 +260,7 @@ const Login: React.FC<LoginProps> = ({ isModal, onClose, onSwitchToRegister }) =
               className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               <UserCircleIcon className="h-5 w-5 text-blue-500" />
-              Continue with Google
+              Create new account
             </button>
           </div>
         </form>

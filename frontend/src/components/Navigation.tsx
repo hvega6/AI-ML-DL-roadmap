@@ -61,7 +61,6 @@ const Navigation: React.FC = () => {
   const studentNavigation = [
     { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
     { name: 'Lessons', href: '/lessons', icon: BookOpenIcon },
-    { name: 'Resources', href: '/resources', icon: BookmarkIcon },
     { name: 'Profile', href: '/profile', icon: UserCircleIcon },
   ];
 
@@ -73,8 +72,17 @@ const Navigation: React.FC = () => {
   ];
 
   const getNavigation = () => {
+    // Show public navigation for non-logged in users
     if (!user) return publicNavigation;
-    return user.role === 'admin' ? adminNavigation : studentNavigation;
+    
+    // Show only specific routes for logged-in users
+    const baseNavigation = user.role === 'admin' ? adminNavigation : studentNavigation;
+    
+    // Add resources to both admin and student navigation
+    return [
+      ...baseNavigation,
+      { name: 'Resources', href: '/resources', icon: BookmarkIcon }
+    ];
   };
 
   const navigation = getNavigation();
@@ -89,39 +97,37 @@ const Navigation: React.FC = () => {
   // Enhanced secure routes with role-based access
   useEffect(() => {
     if (user) {
-      const publicPaths = ['/', '/curriculum', '/resources'];
-      const adminPaths = ['/admin'];
-      const studentPaths = ['/dashboard', '/lessons', '/profile'];
-
-      // Redirect from public paths to appropriate dashboard
-      if (publicPaths.includes(location.pathname)) {
-        history.push(user.role === 'admin' ? '/admin/dashboard' : '/dashboard');
+      // Only handle protected route access
+      if (user.role === 'student' && location.pathname.startsWith('/admin')) {
+        console.log('Student attempting to access admin route, redirecting to dashboard');
+        history.replace('/dashboard');
+        return;
       }
 
-      // Prevent students from accessing admin routes
-      if (user.role === 'student' && adminPaths.some(path => location.pathname.startsWith(path))) {
-        history.push('/dashboard');
-      }
-
-      // Prevent admins from accessing student routes
-      if (user.role === 'admin' && studentPaths.some(path => location.pathname.startsWith(path))) {
-        history.push('/admin/dashboard');
+      if (user.role === 'admin' && location.pathname === '/dashboard') {
+        console.log('Admin accessing student dashboard, redirecting to admin dashboard');
+        history.replace('/admin/dashboard');
+        return;
       }
     } else {
-      // Redirect non-authenticated users from protected routes
-      const protectedPaths = ['/dashboard', '/admin', '/lessons', '/profile'];
+      // Only redirect from protected routes
+      const protectedPaths = ['/dashboard', '/admin', '/profile'];
       if (protectedPaths.some(path => location.pathname.startsWith(path))) {
-        history.push('/');
+        console.log('Unauthenticated user attempting to access protected route');
+        history.replace('/login', { 
+          returnTo: location.pathname,
+          from: location
+        });
       }
     }
-  }, [user, location.pathname, history]);
+  }, [user, location.pathname]);
 
   const handleLogout = async () => {
     try {
       await logout();
       history.push('/');
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error('Logout error:', error);
     }
   };
 

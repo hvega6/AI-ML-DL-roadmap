@@ -1,7 +1,7 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { User } from '../models/User';
+import { User, IUser } from '../models/User';
 import authMiddleware from '../middleware/auth';
 
 const router = express.Router();
@@ -18,21 +18,17 @@ const generateTokens = (userId: string) => {
 };
 
 // Register
-router.route('/register').post(async (req: Request, res: Response) => {
-  console.log('Register request received:', { email: req.body.email });
+router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
 
-    // Basic validation
     if (!email || !password) {
-      console.log('Missing required fields');
       return res.status(400).json({
         message: 'All fields are required',
         errors: ['Email and password are required']
       });
     }
 
-    // Check password strength
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/;
     if (!passwordRegex.test(password)) {
       return res.status(400).json({
@@ -41,42 +37,30 @@ router.route('/register').post(async (req: Request, res: Response) => {
       });
     }
 
-    // Check if user exists
-    console.log('Checking for existing user...');
     let user = await User.findOne({ email });
     if (user) {
-      console.log('User already exists:', { email });
       return res.status(400).json({ 
         message: 'User already exists',
         errors: ['Email is already taken']
       });
     }
 
-    // Create new user
-    console.log('Creating new user...');
-    user = new User({
+    user = await User.create({
       email,
       password,
       role: 'student',
-      preferences: {
-        theme: 'light'
-      },
+      preferences: { theme: 'light' },
       progress: {
         completedLessons: [],
         currentLesson: null,
         quizScores: []
       }
-    });
+    }) as IUser;
 
-    await user.save();
-    console.log('User saved successfully:', user._id);
-
-    // Generate tokens
     const { accessToken, refreshToken } = generateTokens(user._id.toString());
 
-    // Return user data and tokens
-    res.status(201).json({
-      message: 'Registration successful',
+    return res.status(201).json({
+      message: 'User registered successfully',
       user: {
         id: user._id,
         email: user.email,
@@ -85,77 +69,42 @@ router.route('/register').post(async (req: Request, res: Response) => {
       accessToken,
       refreshToken
     });
-  } catch (error: any) {
-    console.error('Registration error:', error);
-    
-    // Handle mongoose validation errors
-    if (error.name === 'ValidationError') {
-      const errors = Object.values(error.errors).map((err: any) => err.message);
-      return res.status(400).json({
-        message: 'Validation failed',
-        errors
-      });
-    }
-
-    res.status(500).json({ 
-      message: 'Server error during registration',
-      errors: [error.message]
-    });
+  } catch (error) {
+    next(error);
   }
 });
 
 // Login
-router.route('/login').post(async (req: Request, res: Response) => {
-  console.log('Login request received:', { email: req.body.email });
+router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
 
-    // Validate input
     if (!email || !password) {
-      console.log('Missing email or password');
       return res.status(400).json({
-        message: 'Validation failed',
+        message: 'All fields are required',
         errors: ['Email and password are required']
       });
     }
 
-    // Find user
-    console.log('Finding user...');
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }) as IUser;
     if (!user) {
-      console.log('User not found:', email);
       return res.status(401).json({
         message: 'Authentication failed',
         errors: ['Invalid email or password']
       });
     }
 
-    // Check password
-    console.log('Checking password...');
-    try {
-      const isMatch = await user.comparePassword(password);
-      if (!isMatch) {
-        console.log('Invalid password for user:', email);
-        return res.status(401).json({
-          message: 'Authentication failed',
-          errors: ['Invalid email or password']
-        });
-      }
-    } catch (error) {
-      console.error('Password comparison error:', error);
-      return res.status(500).json({
-        message: 'Error during authentication',
-        errors: ['An error occurred while verifying your credentials']
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({
+        message: 'Authentication failed',
+        errors: ['Invalid email or password']
       });
     }
 
-    console.log('Login successful for user:', user._id);
-
-    // Generate tokens
     const { accessToken, refreshToken } = generateTokens(user._id.toString());
 
-    // Return user data and tokens
-    res.json({
+    return res.json({
       message: 'Login successful',
       user: {
         id: user._id,
@@ -165,40 +114,38 @@ router.route('/login').post(async (req: Request, res: Response) => {
       accessToken,
       refreshToken
     });
-  } catch (error: any) {
-    console.error('Login error:', error);
-    res.status(500).json({ 
-      message: 'Server error during login',
-      errors: [error.message]
-    });
+  } catch (error) {
+    next(error);
   }
 });
 
 // Refresh Token
-router.route('/refresh-token').post(async (req: Request, res: Response) => {
-  const { refreshToken } = req.body;
-
-  if (!refreshToken) {
-    return res.status(401).json({ 
-      message: 'Authentication failed',
-      errors: ['Refresh Token is required']
-    });
-  }
-
+router.post('/refresh-token', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET) as { userId: string };
-    const { accessToken, refreshToken: newRefreshToken } = generateTokens(decoded.userId);
+    const { refreshToken } = req.body;
 
-    res.json({
-      message: 'Token refresh successful',
-      accessToken,
+    if (!refreshToken) {
+      return res.status(401).json({ 
+        message: 'Refresh token is required',
+        errors: ['No refresh token provided']
+      });
+    }
+
+    const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET) as { userId: string };
+    const { accessToken: newAccessToken, refreshToken: newRefreshToken } = generateTokens(decoded.userId);
+
+    return res.json({
+      accessToken: newAccessToken,
       refreshToken: newRefreshToken
     });
   } catch (error) {
-    res.status(401).json({ 
-      message: 'Authentication failed',
-      errors: ['Invalid refresh token']
-    });
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({
+        message: 'Invalid refresh token',
+        errors: ['Refresh token is invalid or expired']
+      });
+    }
+    next(error);
   }
 });
 

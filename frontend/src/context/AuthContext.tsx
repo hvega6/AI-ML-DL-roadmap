@@ -1,20 +1,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import authService from '../services/authService';
+import type { RegisterData, LoginData, AuthResponse } from '../services/authService';
 
 interface User {
   id: string;
   email: string;
-  role?: string;
+  role: string;
 }
 
 interface AuthContextType {
   user: User | null;
+  isAdmin: boolean;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  register: (data: { email: string; password: string }) => Promise<any>;
-  login: (data: { email: string; password: string }) => Promise<User>;
+  register: (data: RegisterData) => Promise<void>;
+  login: (data: LoginData, remember?: boolean) => Promise<void>;
   logout: () => void;
   clearError: () => void;
 }
@@ -29,60 +31,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const history = useHistory();
 
   useEffect(() => {
-    // Check if user is already logged in
-    const token = localStorage.getItem('accessToken');
-    const storedUser = localStorage.getItem('user');
-    
-    if (token && storedUser) {
+    const initAuth = async () => {
       try {
-        const user = JSON.parse(storedUser);
-        setUser(user);
-        setIsAuthenticated(true);
-      } catch (err) {
-        console.error('Error parsing stored user:', err);
-        localStorage.removeItem('user');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        const token = localStorage.getItem('accessToken');
+        const storedUser = localStorage.getItem('user');
+        
+        if (token && storedUser) {
+          try {
+            const userData = JSON.parse(storedUser) as User;
+            setUser(userData);
+            setIsAuthenticated(true);
+          } catch (err) {
+            console.error('Error parsing stored user:', err);
+            localStorage.removeItem('user');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+          }
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+
+    initAuth();
   }, []);
 
-  const register = async (data: { email: string; password: string }) => {
+  const register = async (data: RegisterData) => {
     try {
       setIsLoading(true);
       setError(null);
-      console.log('Registering user:', data.email);
       const response = await authService.register(data);
-      
-      // Set user and authentication state immediately after registration
-      setUser(response.user);
+      const userData = response.user as User;
+      setUser(userData);
       setIsAuthenticated(true);
-      
-      // Store tokens (should be handled by authService)
-      localStorage.setItem('user', JSON.stringify(response.user));
-      
-      console.log('Registration and auto-login successful');
-      return response;
+      localStorage.setItem('user', JSON.stringify(userData));
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err.message);
+      setError(err.message || 'Failed to register');
       throw err;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const login = async (data: { email: string; password: string }) => {
+  const login = async (data: LoginData, remember: boolean = false) => {
     try {
       setIsLoading(true);
       setError(null);
       const response = await authService.login(data);
-      
-      setUser(response.user);
+      const userData = response.user as User;
+      setUser(userData);
       setIsAuthenticated(true);
       
-      return response.user;
+      if (remember) {
+        // Store refresh token or handle persistent session
+        localStorage.setItem('refreshToken', response.refreshToken);
+      }
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Failed to login');
@@ -101,26 +107,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     history.push('/login');
   };
 
-  const clearError = () => {
-    setError(null);
+  const clearError = () => setError(null);
+
+  const value: AuthContextType = {
+    user,
+    isAdmin: user?.role === 'admin',
+    isAuthenticated,
+    isLoading,
+    error,
+    register,
+    login,
+    logout,
+    clearError
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated,
-        isLoading,
-        error,
-        register,
-        login,
-        logout,
-        clearError,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {

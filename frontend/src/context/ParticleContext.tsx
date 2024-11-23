@@ -9,8 +9,21 @@ const createSeededRandom = (seed: number) => {
   };
 };
 
+// Define particle interface
+interface Particle {
+  delay: number;
+  duration: number;
+  hue: number;
+  translateX: number;
+  translateY: number;
+  particleSize: number;
+  rotationAngle: number;
+  top: number;
+  left: number;
+}
+
 // Particle generation logic
-const generateStaticParticles = () => {
+const generateStaticParticles = (): Particle[] => {
   const fixedSeed = 42;
   const seededRandom = createSeededRandom(fixedSeed);
 
@@ -33,10 +46,14 @@ const generateStaticParticles = () => {
 };
 
 // Create the context
-export const ParticleContext = createContext<ReturnType<typeof generateStaticParticles>>([]);
+export const ParticleContext = createContext<Particle[]>([]);
 
 // Provider component
-export const ParticleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface ParticleProviderProps {
+  children: React.ReactNode;
+}
+
+export const ParticleProvider: React.FC<ParticleProviderProps> = ({ children }) => {
   const staticParticlesData = useMemo(() => generateStaticParticles(), []);
 
   return (
@@ -47,6 +64,8 @@ export const ParticleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 };
 
 // Custom hook to use the particle data
-export const useParticles = () => {
+export const useParticles = (): Particle[] => {
   return useContext(ParticleContext);
 };
+
+export default ParticleContext;

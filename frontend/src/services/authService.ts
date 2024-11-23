@@ -53,6 +53,7 @@ axios.interceptors.response.use(
 );
 
 export interface RegisterData {
+  username: string;
   email: string;
   password: string;
 }
@@ -63,10 +64,11 @@ export interface LoginData {
 }
 
 export interface AuthResponse {
-  message: string;
+  message?: string;
   user: {
     id: string;
     email: string;
+    username: string;
     role?: string;
   };
   accessToken: string;
@@ -74,86 +76,68 @@ export interface AuthResponse {
 }
 
 const authService = {
-  async register(data: RegisterData): Promise<AuthResponse> {
-    try {
-      const response = await axios.post(`${API_URL}/register`, data);
-      const { accessToken, refreshToken, user } = response.data;
-      
-      // Store tokens and user data
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      
-      return response.data;
-    } catch (error: any) {
-      if (error.response?.data?.message) {
-        throw new Error(error.response.data.message);
-      }
-      throw error;
-    }
+  register: async (data: RegisterData): Promise<AuthResponse> => {
+    const response = await axios.post(`${API_URL}/register`, data);
+    const { accessToken, refreshToken } = response.data;
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+    return response.data;
   },
 
-  async login(data: LoginData): Promise<AuthResponse> {
-    try {
-      const response = await axios.post(`${API_URL}/login`, data);
-      const { accessToken, refreshToken, user } = response.data;
-      
-      // Store tokens and user data
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      
-      return response.data;
-    } catch (error: any) {
-      if (error.response?.data?.message) {
-        throw new Error(error.response.data.message);
-      }
-      throw error;
-    }
+  login: async (data: LoginData): Promise<AuthResponse> => {
+    const response = await axios.post(`${API_URL}/login`, data);
+    const { accessToken, refreshToken } = response.data;
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+    return response.data;
   },
 
-  logout() {
+  logout: () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
-    // Clear axios default header
-    delete axios.defaults.headers.common['Authorization'];
   },
 
-  getCurrentUser() {
-    const userStr = localStorage.getItem('user');
-    if (!userStr) return null;
-    try {
-      return JSON.parse(userStr);
-    } catch {
-      return null;
-    }
+  getCurrentUser: () => {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
   },
 
-  getToken() {
+  getToken: () => {
     return localStorage.getItem('accessToken');
   },
 
-  getRefreshToken() {
+  getAccessToken: () => {
+    return localStorage.getItem('accessToken');
+  },
+
+  getRefreshToken: () => {
     return localStorage.getItem('refreshToken');
   },
 
-  isAuthenticated() {
-    const token = this.getToken();
+  refreshToken: async (refreshToken: string): Promise<AuthResponse> => {
+    const response = await axios.post(`${API_URL}/refresh-token`, { refreshToken });
+    const { accessToken, newRefreshToken } = response.data;
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', newRefreshToken);
+    return response.data;
+  },
+
+  isAuthenticated: () => {
+    const token = localStorage.getItem('accessToken');
     if (!token) return false;
 
     try {
       const decoded: any = jwtDecode(token);
       const currentTime = Date.now() / 1000;
-      
-      // Check if token is expired
+
       if (decoded.exp < currentTime) {
-        this.logout();
+        authService.logout();
         return false;
       }
-      
+
       return true;
-    } catch {
+    } catch (error) {
       return false;
     }
   }

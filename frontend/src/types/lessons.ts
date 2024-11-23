@@ -1,7 +1,7 @@
 export type LessonComponent = 'theory' | 'code' | 'practice';
 export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
 export type WeekNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20;
-export type Phase = 1 | 2 | 3;
+export type PhaseNumber = 1 | 2 | 3;
 
 export interface LessonContent {
   theory: {
@@ -29,10 +29,13 @@ export interface LessonContent {
 export interface Lesson {
   id: string;
   weekNumber: WeekNumber;
-  phase: Phase;
+  phase: PhaseNumber;  // Keep for backward compatibility
+  phaseNumber?: PhaseNumber; 
   title: string;
   description: string;
   content: LessonContent;
+  order?: number;
+  prerequisites?: string[];
 }
 
 export interface Project {
@@ -52,7 +55,7 @@ export interface Capstone {
 }
 
 export interface Phase {
-  number: Phase;
+  number: PhaseNumber;
   title: string;
   description: string;
   weeks: WeekNumber[];

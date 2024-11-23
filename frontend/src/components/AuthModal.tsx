@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Modal from './Modal';
+import type { RegisterData, LoginData } from '../services/authService';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -10,11 +11,12 @@ interface AuthModalProps {
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'login' }) => {
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RegisterData & { confirmPassword: string; rememberMe: boolean }>({
     username: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    rememberMe: false
   });
   const [errors, setErrors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,43 +25,57 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
 
   const validateForm = () => {
     const newErrors: string[] = [];
-    
+
+    if (!formData.email) {
+      newErrors.push('Email is required');
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.push('Email is invalid');
+    }
+
+    if (!formData.password) {
+      newErrors.push('Password is required');
+    } else if (formData.password.length < 6) {
+      newErrors.push('Password must be at least 6 characters');
+    }
+
     if (mode === 'register') {
-      if (!formData.username || formData.username.length < 3) {
-        newErrors.push('Username must be at least 3 characters long');
+      if (!formData.username) {
+        newErrors.push('Username is required');
       }
       if (formData.password !== formData.confirmPassword) {
         newErrors.push('Passwords do not match');
       }
     }
-    
-    if (!formData.email || !formData.email.includes('@')) {
-      newErrors.push('Please enter a valid email address');
-    }
-    if (!formData.password || formData.password.length < 6) {
-      newErrors.push('Password must be at least 6 characters long');
-    }
-    
-    setErrors(newErrors);
-    return newErrors.length === 0;
+
+    return newErrors;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    const validationErrors = validateForm();
+    
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
 
     setIsLoading(true);
     setErrors([]);
 
     try {
       if (mode === 'login') {
-        await login({ email: formData.email, password: formData.password }, true);
+        const loginData: LoginData = {
+          email: formData.email,
+          password: formData.password
+        };
+        await login(loginData, formData.rememberMe);
       } else {
-        await register({
+        const registerData: RegisterData = {
           username: formData.username,
           email: formData.email,
           password: formData.password
-        }, true);
+        };
+        await register(registerData);
       }
       onClose();
     } catch (error: any) {
@@ -70,9 +86,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
 
@@ -83,7 +100,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
       username: '',
       email: '',
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      rememberMe: false
     });
   };
 
@@ -166,6 +184,22 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Confirm your password"
               />
+            </div>
+          )}
+
+          {mode === 'login' && (
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                name="rememberMe"
+                checked={formData.rememberMe}
+                onChange={handleInputChange}
+                className="mr-2"
+              />
+              <label className="text-sm font-medium" htmlFor="rememberMe">
+                Remember Me
+              </label>
             </div>
           )}
 

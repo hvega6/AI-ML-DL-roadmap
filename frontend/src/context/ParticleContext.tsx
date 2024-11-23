@@ -32,13 +32,13 @@ const generateStaticParticles = (): Particle[] => {
     const randomY = seededRandom() * 120 - 10; // Spread across 0-110%
     
     return {
-      delay: seededRandom() * 14,
-      duration: 14,
+      delay: seededRandom() * 8,
+      duration: 6 + seededRandom() * 4,
       hue: Math.floor(seededRandom() * 360),
-      translateX: (seededRandom() * 2 - 1) * 100,
-      translateY: (seededRandom() * 2 - 1) * 100,
-      particleSize: seededRandom() * 3 + 1, // 1-4px
-      rotationAngle: seededRandom() * 360,
+      translateX: (seededRandom() * 2 - 1) * 150,
+      translateY: (seededRandom() * 2 - 1) * 150,
+      particleSize: seededRandom() * 7 + 3,
+      rotationAngle: seededRandom() * 720 - 360,
       top: randomY,
       left: randomX
     };

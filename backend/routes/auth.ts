@@ -1,6 +1,5 @@
 import express, { Request, Response } from 'express';
 import { User, IUser } from '../models/User';
-import bcrypt from 'bcryptjs';
 import { generateTokens } from '../utils/jwt';
 import authMiddleware from '../middleware/auth';
 import mongoose from 'mongoose';
@@ -32,16 +31,10 @@ const register: AsyncRequestHandler<{}, any, RegisterBody> = async (req, res) =>
       return;
     }
 
-    // Hash password
-    console.log('Hashing password...');
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    console.log('Password hashed successfully');
-
-    // Create user
+    // Create user with plain password - mongoose will hash it
     const user = new User({
       email,
-      password: hashedPassword,
+      password, // Mongoose pre-save hook will hash this
       role,
       progress: {
         completedLessons: [],

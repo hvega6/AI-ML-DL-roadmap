@@ -82,6 +82,12 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }
     e.preventDefault();
     setError('');
 
+    // Check if passwords match first
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     // Get all validation messages that aren't empty
     const activeValidationMessages = Object.values(validationMessages).filter(msg => msg);
     if (activeValidationMessages.length > 0) {

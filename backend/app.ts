@@ -34,9 +34,15 @@ mongoose.connect(process.env.MONGODB_URI!, {
 } as mongoose.ConnectOptions)
   .then(() => {
     console.log('Connected to MongoDB successfully');
+    console.log(`Database: ${process.env.DATABASE_NAME}`);
   })
   .catch((error) => {
     console.error('MongoDB connection error:', error);
+    console.error('Connection Details:', {
+      database: process.env.DATABASE_NAME,
+      uri: process.env.MONGODB_URI?.replace(/:([^:@]{8})[^:@]*@/, ':****@') // Mask credentials
+    });
+    // Don't exit process, let the error handler deal with it
   });
 
 // Routes

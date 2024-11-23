@@ -67,15 +67,34 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }
 
   useEffect(() => {
     setPasswordStrength(validatePassword(formData.password));
-  }, [formData.password, formData.confirmPassword]);
+  }, [formData.password]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    
+    // Update form data
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+
+    // Clear any previous errors
     setError('');
+
+    // Only validate password when the password field changes
+    if (name === 'password') {
+      setPasswordStrength(validatePassword(value));
+    }
+
+    // Update validation messages for password match only when either password field changes
+    if (name === 'password' || name === 'confirmPassword') {
+      setValidationMessages(prev => ({
+        ...prev,
+        match: formData.confirmPassword && value !== (name === 'password' ? formData.confirmPassword : formData.password)
+          ? 'Passwords do not match'
+          : ''
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -114,14 +133,12 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }
       });
       
       if (isModal) {
-        if (onSwitchToLogin) {
-          onSwitchToLogin();
-        }
         if (onClose) {
           onClose();
         }
       } else {
-        history.push('/login');
+        // Redirect to dashboard after successful registration
+        history.push('/dashboard');
       }
     } catch (err: any) {
       console.error('Registration error:', err);
@@ -182,9 +199,9 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }
             <label htmlFor="password" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               Password
             </label>
-            <div className="relative mt-1">
+            <div className="mt-1 relative">
               <input
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 id="password"
                 name="password"
                 value={formData.password}
@@ -195,12 +212,12 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }
                     ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
                 }`}
-                placeholder="Create your password"
+                placeholder="Enter your password"
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? (
                   <EyeSlashIcon className="h-5 w-5 text-gray-400" />
@@ -296,9 +313,9 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }
             <label htmlFor="confirmPassword" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               Confirm Password
             </label>
-            <div className="relative mt-1">
+            <div className="mt-1 relative">
               <input
-                type={showConfirmPassword ? 'text' : 'password'}
+                type={showConfirmPassword ? "text" : "password"}
                 id="confirmPassword"
                 name="confirmPassword"
                 value={formData.confirmPassword}
@@ -313,8 +330,8 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }
               />
               <button
                 type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               >
                 {showConfirmPassword ? (
                   <EyeSlashIcon className="h-5 w-5 text-gray-400" />

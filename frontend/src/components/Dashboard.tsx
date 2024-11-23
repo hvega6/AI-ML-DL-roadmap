@@ -39,37 +39,70 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [fantasyName, setFantasyName] = useState<string>('');
+
+  // Combined useEffect for initial data loading
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
+        
+        // Fetch lessons and progress
+        const [lessonsData, progressData] = await Promise.all([
+          axios.get(`${process.env.REACT_APP_API_URL}/api/lessons`),
+          axios.get(`${process.env.REACT_APP_API_URL}/api/progress/${user?.id}`)
+        ]);
 
-        // Fetch user progress
-        const progressResponse = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/progress/${user?.id}`
-        );
-        setProgress(progressResponse.data.progress);
-
-        // Fetch lessons
-        const lessonsResponse = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/lessons`
-        );
-        setLessons(lessonsResponse.data);
-      } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to load dashboard data');
-        console.error('Dashboard error:', err);
+        setLessons(lessonsData.data);
+        setProgress(progressData.data);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
     };
 
-    if (isAuthenticated()) {
+    if (isAuthenticated && user) {
       fetchData();
     }
   }, [user, isAuthenticated]);
 
-  if (!isAuthenticated()) {
+  const generateFantasyName = async () => {
+    try {
+      const response = await fetch('https://fantasyname.lukewh.com/');
+      if (!response.ok) throw new Error('Failed to fetch fantasy name');
+      const name = await response.text();
+      const trimmedName = name.trim();
+      setFantasyName(trimmedName);
+      localStorage.setItem('fantasyName', trimmedName);
+      return trimmedName;
+    } catch (error) {
+      console.error('Error generating fantasy name:', error);
+      const fallbackNames = ['Brave Warrior', 'Wise Scholar', 'Curious Explorer', 'Code Mage', 'Digital Knight'];
+      const fallbackName = fallbackNames[Math.floor(Math.random() * fallbackNames.length)];
+      setFantasyName(fallbackName);
+      localStorage.setItem('fantasyName', fallbackName);
+      return fallbackName;
+    }
+  };
+
+  // Separate useEffect for fantasy name
+  useEffect(() => {
+    const loadFantasyName = async () => {
+      const savedName = localStorage.getItem('fantasyName');
+      if (savedName) {
+        setFantasyName(savedName);
+      } else {
+        await generateFantasyName();
+      }
+    };
+    
+    loadFantasyName();
+  }, []);
+
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -106,15 +139,15 @@ const Dashboard: React.FC = () => {
 
   const completedLessonsCount = progress?.completedLessons.length || 0;
   const totalLessons = lessons.length;
-  const completionPercentage = totalLessons > 0 
-    ? Math.round((completedLessonsCount / totalLessons) * 100) 
+  const completionPercentage = totalLessons > 0
+    ? Math.round((completedLessonsCount / totalLessons) * 100)
     : 0;
 
   const averageQuizScore = progress?.quizScores.length
     ? Math.round(
-        progress.quizScores.reduce((acc, curr) => acc + curr.score, 0) /
-          progress.quizScores.length
-      )
+      progress.quizScores.reduce((acc, curr) => acc + curr.score, 0) /
+      progress.quizScores.length
+    )
     : 0;
 
   const nextLesson = progress?.currentLesson
@@ -124,13 +157,27 @@ const Dashboard: React.FC = () => {
   return (
     <div className={`min-h-screen py-20 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-4">Welcome back, {user?.email}!</h1>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <p className="text-lg text-gray-600 dark:text-gray-300">
+              Greetings, <span className="font-semibold">{fantasyName || 'Adventurer'}</span>! Your learning quest awaits.
+            </p>
+            <button
+              onClick={generateFantasyName}
+              className="inline-flex items-center p-1 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+              title="Generate new name"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
           <p className="text-lg text-gray-500 dark:text-gray-400">
             Track your progress and continue your learning journey
           </p>
         </div>
-
+        
         {/* Progress Overview */}
         <div className="grid grid-cols-1 gap-6 mb-12 md:grid-cols-3">
           <div className={`p-6 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
@@ -205,15 +252,13 @@ const Dashboard: React.FC = () => {
                 return (
                   <div
                     key={index}
-                    className={`flex items-center justify-between p-4 rounded-lg ${
-                      isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
-                    }`}
+                    className={`flex items-center justify-between p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                      }`}
                   >
                     <div className="flex items-center space-x-4">
                       <div
-                        className={`p-2 rounded-full ${
-                          quiz.score >= 70 ? 'bg-green-100' : 'bg-yellow-100'
-                        }`}
+                        className={`p-2 rounded-full ${quiz.score >= 70 ? 'bg-green-100' : 'bg-yellow-100'
+                          }`}
                       >
                         {quiz.score >= 70 ? (
                           <CheckCircleIcon className="h-6 w-6 text-green-600" />
@@ -244,9 +289,8 @@ const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <Link
             to="/lessons"
-            className={`p-6 rounded-lg shadow-lg ${
-              isDarkMode ? 'bg-gray-800' : 'bg-white'
-            } hover:shadow-xl transition-shadow duration-200`}
+            className={`p-6 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'
+              } hover:shadow-xl transition-shadow duration-200`}
           >
             <div className="flex items-center space-x-4">
               <div className="p-3 rounded-full bg-blue-100">
@@ -263,9 +307,8 @@ const Dashboard: React.FC = () => {
 
           <Link
             to="/resources"
-            className={`p-6 rounded-lg shadow-lg ${
-              isDarkMode ? 'bg-gray-800' : 'bg-white'
-            } hover:shadow-xl transition-shadow duration-200`}
+            className={`p-6 rounded-lg shadow-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'
+              } hover:shadow-xl transition-shadow duration-200`}
           >
             <div className="flex items-center space-x-4">
               <div className="p-3 rounded-full bg-green-100">

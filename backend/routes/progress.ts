@@ -1,125 +1,140 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response, RequestHandler } from 'express';
 import { User, IUser } from '../models/User';
 import authMiddleware from '../middleware/auth';
+import mongoose from 'mongoose';
 
 const router = express.Router();
+const protectedRouter = express.Router();
+
+interface ProgressParams {
+  userId: string;
+}
+
+interface UpdateProgressBody {
+  completedLessons?: string[];
+  currentLesson?: string | null;
+  quizScores?: Array<{
+    quizId: string;
+    score: number;
+    dateTaken: Date;
+  }>;
+}
+
+interface UpdatePreferencesBody {
+  theme?: 'light' | 'dark';
+}
+
+interface AuthenticatedRequest extends Request {
+  user: IUser & mongoose.Document;
+}
+
+type AsyncRequestHandler<P = {}, ResBody = any, ReqBody = any> = (
+  req: Request<P, ResBody, ReqBody> & { user: IUser & mongoose.Document },
+  res: Response<ResBody>
+) => Promise<void>;
 
 // Get user progress
-router.get('/:userId', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+const getUserProgress: AsyncRequestHandler<ProgressParams> = async (req, res) => {
   try {
     const { userId } = req.params;
-    const user = await User.findById(userId) as IUser;
-    
+    const requestingUser = req.user;
+
+    // Check if user is authorized to access this progress
+    if (requestingUser.id !== userId && requestingUser.role !== 'admin') {
+      res.status(403).json({ message: 'Not authorized to access this progress' });
+      return;
+    }
+
+    const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({
-        message: 'User not found',
-        errors: ['The requested user does not exist']
-      });
+      res.status(404).json({ message: 'User not found' });
+      return;
     }
 
-    // Only allow users to access their own progress or admins to access any progress
-    if (req.user?.id !== userId && req.user?.role !== 'admin') {
-      return res.status(403).json({
-        message: 'Access denied',
-        errors: ['You do not have permission to view this user\'s progress']
-      });
-    }
-
-    return res.json({
+    res.json({
       progress: user.progress,
       preferences: user.preferences
     });
   } catch (error) {
-    next(error);
+    console.error('Get progress error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-});
+};
 
 // Update user progress
-router.put('/:userId', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+const updateUserProgress: AsyncRequestHandler<ProgressParams, any, UpdateProgressBody> = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { lessonId, completed, quizScore } = req.body;
+    const requestingUser = req.user;
 
-    // Only allow users to update their own progress or admins to update any progress
-    if (req.user?.id !== userId && req.user?.role !== 'admin') {
-      return res.status(403).json({
-        message: 'Access denied',
-        errors: ['You do not have permission to update this user\'s progress']
-      });
-    }
-
-    const user = await User.findById(userId) as IUser;
-    if (!user) {
-      return res.status(404).json({
-        message: 'User not found',
-        errors: ['The requested user does not exist']
-      });
-    }
-
-    // Update completed lessons
-    if (completed && !user.progress.completedLessons.includes(lessonId)) {
-      user.progress.completedLessons.push(lessonId);
-    }
-
-    // Update current lesson
-    if (lessonId) {
-      user.progress.currentLesson = lessonId;
-    }
-
-    // Update quiz score if provided
-    if (quizScore !== undefined) {
-      user.progress.quizScores.push({
-        quizId: lessonId,
-        score: quizScore,
-        dateTaken: new Date()
-      });
-    }
-
-    await user.save();
-
-    return res.json({
-      message: 'Progress updated successfully',
-      progress: user.progress
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Update user preferences
-router.put('/:userId/preferences', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { userId } = req.params;
-    const { theme } = req.body;
-
-    // Only allow users to update their own preferences or admins to update any preferences
-    if (req.user?.id !== userId && req.user?.role !== 'admin') {
-      return res.status(403).json({
-        message: 'Access denied',
-        errors: ['You do not have permission to update this user\'s preferences']
-      });
+    // Check if user is authorized to update this progress
+    if (requestingUser.id !== userId && requestingUser.role !== 'admin') {
+      res.status(403).json({ message: 'Not authorized to update this progress' });
+      return;
     }
 
     const user = await User.findByIdAndUpdate(
       userId,
-      { $set: { 'preferences.theme': theme } },
-      { new: true, runValidators: true }
-    ) as IUser;
+      { $set: { progress: { ...req.body } } },
+      { new: true }
+    );
 
     if (!user) {
-      return res.status(404).json({
-        message: 'User not found',
-        errors: ['The requested user does not exist']
-      });
+      res.status(404).json({ message: 'User not found' });
+      return;
     }
 
-    return res.json({
+    res.json({
+      message: 'Progress updated successfully',
+      progress: user.progress
+    });
+  } catch (error) {
+    console.error('Update progress error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Update user preferences
+const updateUserPreferences: AsyncRequestHandler<ProgressParams, any, UpdatePreferencesBody> = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const requestingUser = req.user;
+
+    // Check if user is authorized to update preferences
+    if (requestingUser.id !== userId && requestingUser.role !== 'admin') {
+      res.status(403).json({ message: 'Not authorized to update these preferences' });
+      return;
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: { preferences: req.body } },
+      { new: true }
+    );
+
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    res.json({
       message: 'Preferences updated successfully',
       preferences: user.preferences
     });
   } catch (error) {
-    next(error);
+    console.error('Update preferences error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-});
+};
+
+// Protected routes
+protectedRouter.use(authMiddleware as RequestHandler);
+
+// Cast route handlers to unknown first to satisfy TypeScript
+protectedRouter.get('/:userId', getUserProgress as unknown as RequestHandler);
+protectedRouter.put('/:userId', updateUserProgress as unknown as RequestHandler);
+protectedRouter.put('/:userId/preferences', updateUserPreferences as unknown as RequestHandler);
+
+router.use(protectedRouter);
 
 export default router;

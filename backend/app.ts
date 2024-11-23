@@ -2,6 +2,10 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+
+// Import models
+import './models/Lesson';
+
 import authRoutes from './routes/auth';
 import lessonRoutes from './routes/lessons';
 import progressRoutes from './routes/progress';

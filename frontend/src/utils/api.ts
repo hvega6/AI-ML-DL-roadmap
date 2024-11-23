@@ -1,61 +1,70 @@
-import axios from 'axios';
+import axios, { 
+  AxiosInstance, 
+  InternalAxiosRequestConfig,
+  AxiosResponse,
+  AxiosError 
+} from 'axios';
 import authService from '../services/authService';
 
-const BASE_URL = import.meta.env.VITE_API_URL?.replace('/auth', '');
+interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
 
-const api = axios.create({
-  baseURL: BASE_URL,
+const baseURL = import.meta.env.VITE_API_URL?.replace('/auth', '') || 'http://localhost:3000';
+
+const api: AxiosInstance = axios.create({
+  baseURL,
+  timeout: 10000,
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 });
 
 // Request interceptor
 api.interceptors.request.use(
-  (config) => {
-    const token = authService.getToken();
+  (config: InternalAxiosRequestConfig) => {
+    const token = authService.getAccessToken();
     if (token) {
+      config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
+  (error: AxiosError) => {
     return Promise.reject(error);
   }
 );
 
 // Response interceptor
 api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    // If error is not 401 or request has already been retried
-    if (error.response?.status !== 401 || originalRequest._retry) {
-      return Promise.reject(error);
-    }
-
-    originalRequest._retry = true;
-
-    try {
-      const refreshToken = authService.getRefreshToken();
-      if (!refreshToken) {
-        throw new Error('No refresh token available');
+  (response: AxiosResponse) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as CustomAxiosRequestConfig;
+    
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      try {
+        const refreshToken = authService.getRefreshToken();
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+        
+        const response = await authService.refreshToken(refreshToken);
+        const { accessToken } = response;
+        
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        }
+        
+        return axios(originalRequest);
+      } catch (refreshError) {
+        authService.logout();
+        return Promise.reject(refreshError);
       }
-
-      const { accessToken } = await authService.refreshToken(refreshToken);
-      localStorage.setItem('accessToken', accessToken);
-
-      // Update the failed request with new token
-      originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-      return api(originalRequest);
-    } catch (refreshError) {
-      // If refresh token is invalid, logout user
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      window.location.href = '/login';
-      return Promise.reject(refreshError);
     }
+    
+    return Promise.reject(error);
   }
 );
 

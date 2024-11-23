@@ -37,11 +37,10 @@ const userSchema = new Schema<IUser>({
   password: { 
     type: String, 
     required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters long'],
+    minlength: [8, 'Password must be at least 8 characters long'],
     validate: {
       validator: function(v: string) {
-        // At least 6 chars, 1 uppercase, 1 lowercase, 1 number
-        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/.test(v);
+        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(v);
       },
       message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
     }
@@ -52,19 +51,32 @@ const userSchema = new Schema<IUser>({
     default: 'student'
   },
   preferences: {
-    theme: { 
-      type: String, 
+    theme: {
+      type: String,
       enum: ['light', 'dark'],
       default: 'light'
     }
   },
   progress: {
-    completedLessons: [{ type: String }],
-    currentLesson: { type: String, default: null },
+    completedLessons: [{
+      type: Schema.Types.ObjectId,
+      ref: 'Lesson'
+    }],
+    currentLesson: {
+      type: Schema.Types.ObjectId,
+      ref: 'Lesson',
+      default: null
+    },
     quizScores: [{
-      quizId: { type: String },
-      score: { type: Number },
-      dateTaken: { type: Date, default: Date.now }
+      quizId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Quiz'
+      },
+      score: Number,
+      dateTaken: {
+        type: Date,
+        default: Date.now
+      }
     }]
   }
 }, {
@@ -74,14 +86,9 @@ const userSchema = new Schema<IUser>({
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
   try {
-    if (!this.password) {
-      throw new Error('Password not set for user');
-    }
-    const isMatch = await bcrypt.compare(candidatePassword, this.password);
-    return isMatch;
+    return await bcrypt.compare(candidatePassword, this.password);
   } catch (error) {
-    console.error('Password comparison error:', error);
-    throw new Error('Error comparing passwords');
+    throw error;
   }
 };
 
@@ -93,12 +100,10 @@ userSchema.pre('save', async function(next) {
 
   try {
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(this.password, salt);
-    this.password = hashedPassword;
+    this.password = await bcrypt.hash(this.password, salt);
     next();
-  } catch (error) {
-    console.error('Password hashing error:', error);
-    next(error as Error);
+  } catch (error: any) {
+    next(error);
   }
 });
 

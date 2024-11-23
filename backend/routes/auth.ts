@@ -1,68 +1,63 @@
-import express, { Request, Response, NextFunction } from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import express, { Request, Response } from 'express';
 import { User, IUser } from '../models/User';
+import bcrypt from 'bcryptjs';
+import { generateTokens } from '../utils/jwt';
 import authMiddleware from '../middleware/auth';
+import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
-// JWT Secret
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key';
+interface RegisterBody {
+  email: string;
+  password: string;
+  role?: 'student' | 'admin';
+}
 
-// Generate tokens
-const generateTokens = (userId: string) => {
-  const accessToken = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '1h' });
-  const refreshToken = jwt.sign({ userId }, JWT_REFRESH_SECRET, { expiresIn: '7d' });
-  return { accessToken, refreshToken };
-};
+type AsyncRequestHandler<P = {}, ResBody = any, ReqBody = any> = (
+  req: Request<P, ResBody, ReqBody>,
+  res: Response<ResBody>
+) => Promise<void>;
 
-// Register
-router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
+const register: AsyncRequestHandler<{}, any, RegisterBody> = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role = 'student' } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({
-        message: 'All fields are required',
-        errors: ['Email and password are required']
-      });
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      res.status(400).json({ message: 'User already exists' });
+      return;
     }
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/;
-    if (!passwordRegex.test(password)) {
-      return res.status(400).json({
-        message: 'Password is too weak',
-        errors: ['Password must contain at least one uppercase letter, one lowercase letter, and one number']
-      });
-    }
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    let user = await User.findOne({ email });
-    if (user) {
-      return res.status(400).json({ 
-        message: 'User already exists',
-        errors: ['Email is already taken']
-      });
-    }
-
-    user = await User.create({
+    // Create user
+    const user = new User({
       email,
-      password,
-      role: 'student',
-      preferences: { theme: 'light' },
+      password: hashedPassword,
+      role,
       progress: {
         completedLessons: [],
         currentLesson: null,
         quizScores: []
+      },
+      preferences: {
+        theme: 'light'
       }
-    }) as IUser;
+    });
 
-    const { accessToken, refreshToken } = generateTokens(user._id.toString());
+    await user.save();
 
-    return res.status(201).json({
+    // Generate tokens
+    const { accessToken, refreshToken } = generateTokens(user.id);
+
+    res.status(201).json({
       message: 'User registered successfully',
       user: {
-        id: user._id,
+        id: user.id,
         email: user.email,
         role: user.role
       },
@@ -70,44 +65,40 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
       refreshToken
     });
   } catch (error) {
-    next(error);
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-});
+};
 
-// Login
-router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
+interface LoginBody {
+  email: string;
+  password: string;
+}
+
+const login: AsyncRequestHandler<{}, any, LoginBody> = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({
-        message: 'All fields are required',
-        errors: ['Email and password are required']
-      });
-    }
-
-    const user = await User.findOne({ email }) as IUser;
+    // Check if user exists
+    const user = await User.findOne({ email }).select('+password');
     if (!user) {
-      return res.status(401).json({
-        message: 'Authentication failed',
-        errors: ['Invalid email or password']
-      });
+      res.status(400).json({ message: 'Invalid credentials' });
+      return;
     }
 
+    // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({
-        message: 'Authentication failed',
-        errors: ['Invalid email or password']
-      });
+      res.status(400).json({ message: 'Invalid credentials' });
+      return;
     }
 
-    const { accessToken, refreshToken } = generateTokens(user._id.toString());
+    // Generate tokens
+    const { accessToken, refreshToken } = generateTokens(user.id);
 
-    return res.json({
-      message: 'Login successful',
+    res.json({
       user: {
-        id: user._id,
+        id: user.id,
         email: user.email,
         role: user.role
       },
@@ -115,38 +106,47 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
       refreshToken
     });
   } catch (error) {
-    next(error);
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-});
+};
 
-// Refresh Token
-router.post('/refresh-token', async (req: Request, res: Response, next: NextFunction) => {
+interface RefreshTokenBody {
+  refreshToken: string;
+}
+
+const refreshToken: AsyncRequestHandler<{}, any, RefreshTokenBody> = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const { refreshToken: token } = req.body;
 
-    if (!refreshToken) {
-      return res.status(401).json({ 
-        message: 'Refresh token is required',
-        errors: ['No refresh token provided']
-      });
+    if (!token) {
+      res.status(401).json({ message: 'Refresh token is required' });
+      return;
     }
 
-    const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET) as { userId: string };
-    const { accessToken: newAccessToken, refreshToken: newRefreshToken } = generateTokens(decoded.userId);
+    // Verify refresh token and get user ID
+    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key') as { userId: string };
+    
+    // Generate new tokens
+    const { accessToken, refreshToken: newRefreshToken } = generateTokens(decoded.userId);
 
-    return res.json({
-      accessToken: newAccessToken,
+    res.json({
+      message: 'Tokens refreshed successfully',
+      accessToken,
       refreshToken: newRefreshToken
     });
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
-      return res.status(401).json({
-        message: 'Invalid refresh token',
-        errors: ['Refresh token is invalid or expired']
-      });
+      res.status(401).json({ message: 'Invalid refresh token' });
+      return;
     }
-    next(error);
+    console.error('Token refresh error:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-});
+};
+
+router.post('/register', register);
+router.post('/login', login);
+router.post('/refresh-token', refreshToken);
 
 export default router;

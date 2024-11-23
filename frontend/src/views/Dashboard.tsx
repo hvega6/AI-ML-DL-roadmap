@@ -4,12 +4,14 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import authService from '../services/authService';
 import axios from 'axios';
-import { 
-  FireIcon, 
-  AcademicCapIcon, 
-  ClockIcon, 
-  CheckCircleIcon 
+import {
+  FireIcon,
+  AcademicCapIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/solid';
+import { useAuth } from '../context/AuthContext';
 
 // Register all Chart.js components
 Chart.register(...registerables);
@@ -38,6 +40,9 @@ const Dashboard: React.FC = () => {
   const [lessonChart, setLessonChart] = useState<Chart | null>(null);
   const [skillChart, setSkillChart] = useState<Chart | null>(null);
   const [timeChart, setTimeChart] = useState<Chart | null>(null);
+
+  const { user } = useAuth();
+  const [fantasyName, setFantasyName] = useState<string>('');
 
   useEffect(() => {
     fetchUserProgress();
@@ -68,7 +73,7 @@ const Dashboard: React.FC = () => {
       //     'Authorization': `Bearer ${authService.getToken()}` 
       //   }
       // });
-      
+
       // setUserProgress(response.data);
       setUserProgress(mockProgress);
       console.log('User progress fetched:', mockProgress);
@@ -80,8 +85,8 @@ const Dashboard: React.FC = () => {
 
   // Create chart configurations
   const createChartConfig = (
-    type: ChartConfiguration['type'], 
-    data: ChartConfiguration['data'], 
+    type: ChartConfiguration['type'],
+    data: ChartConfiguration['data'],
     options?: ChartConfiguration['options']
   ): ChartConfiguration => ({
     type,
@@ -123,6 +128,19 @@ const Dashboard: React.FC = () => {
     }
   });
 
+  useEffect(() => {
+    const loadFantasyName = async () => {
+      const savedName = localStorage.getItem('fantasyName');
+      if (savedName) {
+        setFantasyName(savedName);
+      } else {
+        await generateFantasyName();
+      }
+    };
+
+    loadFantasyName();
+  }, []);
+
   // Create and update charts when user progress changes
   useEffect(() => {
     if (!userProgress) return;
@@ -143,11 +161,11 @@ const Dashboard: React.FC = () => {
             datasets: [{
               label: 'Lesson Completion',
               data: [
-                userProgress.lessonsCompleted, 
+                userProgress.lessonsCompleted,
                 userProgress.totalLessons - userProgress.lessonsCompleted
               ],
               backgroundColor: [
-                isDarkMode ? '#10B981' : '#3B82F6', 
+                isDarkMode ? '#10B981' : '#3B82F6',
                 isDarkMode ? '#6366F1' : '#93C5FD'
               ]
             }]
@@ -206,6 +224,23 @@ const Dashboard: React.FC = () => {
     }
   }, [userProgress, isDarkMode]);
 
+  const generateFantasyName = async () => {
+    try {
+      const response = await fetch('https://fantasyname.lukewh.com/');
+      if (!response.ok) throw new Error('Failed to fetch fantasy name');
+      const name = await response.text();
+      const trimmedName = name.trim();
+      setFantasyName(trimmedName);
+      localStorage.setItem('fantasyName', trimmedName);
+    } catch (error) {
+      console.error('Error generating fantasy name:', error);
+      const fallbackNames = ['Brave Warrior', 'Wise Scholar', 'Curious Explorer', 'Code Mage', 'Digital Knight'];
+      const fallbackName = fallbackNames[Math.floor(Math.random() * fallbackNames.length)];
+      setFantasyName(fallbackName);
+      localStorage.setItem('fantasyName', fallbackName);
+    }
+  };
+
   if (error) {
     return (
       <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} p-8 flex items-center justify-center`}>
@@ -220,9 +255,24 @@ const Dashboard: React.FC = () => {
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} p-8`}>
       <div className="container mx-auto">
-        <h1 className={`text-3xl font-bold mb-8 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-          Dashboard
-        </h1>
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <p className="text-lg text-gray-600 dark:text-gray-300">
+              Your Adventurer name is, <span className="font-semibold">{fantasyName || 'Adventurer'}</span>! Your learning quest awaits.
+            </p>
+            <button
+              onClick={generateFantasyName}
+              className="inline-flex items-center p-1 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+              title="Generate new name"
+            >
+              <ArrowPathIcon className="h-5 w-5" />
+            </button>
+          </div>
+          <p className="text-lg text-gray-500 dark:text-gray-400">
+            Track your progress and continue your learning journey
+          </p>
+        </div>
 
         {userProgress ? (
           <>
@@ -299,13 +349,12 @@ const Dashboard: React.FC = () => {
 
             {/* Action Button */}
             <div className="mt-8 text-center">
-              <Link 
-                to="/lessons" 
-                className={`px-6 py-3 rounded-lg ${
-                  isDarkMode 
-                    ? 'bg-blue-700 hover:bg-blue-800 text-white' 
+              <Link
+                to="/lessons"
+                className={`px-6 py-3 rounded-lg ${isDarkMode
+                    ? 'bg-blue-700 hover:bg-blue-800 text-white'
                     : 'bg-blue-600 hover:bg-blue-700 text-white'
-                } transition-colors duration-200`}
+                  } transition-colors duration-200`}
               >
                 View All Lessons
               </Link>

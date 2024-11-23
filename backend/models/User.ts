@@ -87,8 +87,14 @@ const userSchema = new Schema<IUser>({
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
   try {
-    return await bcrypt.compare(candidatePassword, this.password);
+    console.log('Comparing passwords...');
+    console.log('Has stored password:', !!this.password);
+    console.log('Candidate password length:', candidatePassword.length);
+    const isMatch = await bcrypt.compare(candidatePassword, this.password);
+    console.log('Password comparison result:', isMatch);
+    return isMatch;
   } catch (error) {
+    console.error('Error in comparePassword:', error);
     throw error;
   }
 };

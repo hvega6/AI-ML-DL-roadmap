@@ -22,17 +22,21 @@ type AsyncRequestHandler<P = {}, ResBody = any, ReqBody = any> = (
 const register: AsyncRequestHandler<{}, any, RegisterBody> = async (req, res) => {
   try {
     const { email, password, role = 'student' } = req.body;
+    console.log('Registration attempt for email:', email);
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
+      console.log('User already exists:', email);
       res.status(400).json({ message: 'User already exists' });
       return;
     }
 
     // Hash password
+    console.log('Hashing password...');
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
+    console.log('Password hashed successfully');
 
     // Create user
     const user = new User({
@@ -50,13 +54,16 @@ const register: AsyncRequestHandler<{}, any, RegisterBody> = async (req, res) =>
     });
 
     await user.save();
+    console.log('User saved successfully:', email);
 
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(user._id.toString());
+    console.log('Generated tokens for new user');
 
     res.status(201).json({
       message: 'User registered successfully',
       user: {
+        id: user._id,
         email: user.email,
         role: user.role,
         preferences: user.preferences
@@ -66,7 +73,7 @@ const register: AsyncRequestHandler<{}, any, RegisterBody> = async (req, res) =>
     });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error during registration' });
   }
 };
 
@@ -78,23 +85,36 @@ interface LoginBody {
 const login: AsyncRequestHandler<{}, any, LoginBody> = async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log('Login attempt for email:', email);
 
     // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
+      console.log('User not found:', email);
       res.status(400).json({ message: 'Invalid credentials' });
       return;
     }
+    console.log('User found:', user.email);
+    console.log('User has password:', !!user.password);
 
     // Check password
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      res.status(400).json({ message: 'Invalid credentials' });
+    try {
+      const isMatch = await user.comparePassword(password);
+      console.log('Password match result:', isMatch);
+      if (!isMatch) {
+        console.log('Password does not match');
+        res.status(400).json({ message: 'Invalid credentials' });
+        return;
+      }
+    } catch (err) {
+      console.error('Error comparing passwords:', err);
+      res.status(500).json({ message: 'Error verifying credentials' });
       return;
     }
 
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(user._id.toString());
+    console.log('Generated tokens for user:', user.email);
 
     // Return user data and tokens
     res.json({

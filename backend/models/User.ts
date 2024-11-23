@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema, Types } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 export interface IUser extends Document {
@@ -9,10 +9,10 @@ export interface IUser extends Document {
     theme: 'light' | 'dark';
   };
   progress: {
-    completedLessons: string[];
-    currentLesson: string | null;
+    completedLessons: Types.ObjectId[];
+    currentLesson: Types.ObjectId | null;
     quizScores: Array<{
-      quizId: string;
+      quizId: Types.ObjectId;
       score: number;
       dateTaken: Date;
     }>;

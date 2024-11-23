@@ -206,12 +206,7 @@ const Curriculum: React.FC = () => {
                 padding: '2rem'
               }}
               contentArrowStyle={{ borderRight: '7px solid rgb(33, 150, 243)' }}
-              date={
-                <div>
-                  <span className="text-lg font-bold text-gray-900 dark:text-white block">{topic.phase}</span>
-                  <span className="text-md text-gray-700 dark:text-gray-300">{topic.date}</span>
-                </div>
-              }
+              date={`Week ${topic.weekNumber}`}
               iconStyle={{ background: 'rgb(33, 150, 243)', color: '#fff' }}
               icon={topic.icon}
             >

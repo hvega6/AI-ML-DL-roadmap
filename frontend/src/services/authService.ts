@@ -53,7 +53,6 @@ axios.interceptors.response.use(
 );
 
 export interface RegisterData {
-  username: string;
   email: string;
   password: string;
 }
@@ -68,8 +67,7 @@ export interface AuthResponse {
   user: {
     id: string;
     email: string;
-    username: string;
-    role?: string;
+    role: string;
   };
   accessToken: string;
   refreshToken: string;

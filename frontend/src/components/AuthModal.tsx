@@ -11,13 +11,14 @@ interface AuthModalProps {
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'login' }) => {
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
-  const [formData, setFormData] = useState<RegisterData & { confirmPassword: string; rememberMe: boolean }>({
-    username: '',
+  const initialFormState = {
     email: '',
     password: '',
     confirmPassword: '',
     rememberMe: false
-  });
+  };
+
+  const [formData, setFormData] = useState<RegisterData & { confirmPassword: string; rememberMe: boolean }>(initialFormState);
   const [errors, setErrors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -34,17 +35,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
 
     if (!formData.password) {
       newErrors.push('Password is required');
-    } else if (formData.password.length < 6) {
-      newErrors.push('Password must be at least 6 characters');
+    } else if (formData.password.length < 8) {
+      newErrors.push('Password must be at least 8 characters');
     }
 
-    if (mode === 'register') {
-      if (!formData.username) {
-        newErrors.push('Username is required');
-      }
-      if (formData.password !== formData.confirmPassword) {
-        newErrors.push('Passwords do not match');
-      }
+    if (mode === 'register' && formData.password !== formData.confirmPassword) {
+      newErrors.push('Passwords do not match');
     }
 
     return newErrors;
@@ -69,18 +65,19 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
           password: formData.password
         };
         await login(loginData, formData.rememberMe);
+        setIsLoading(false);
+        onClose();
       } else {
         const registerData: RegisterData = {
-          username: formData.username,
           email: formData.email,
           password: formData.password
         };
         await register(registerData);
+        setIsLoading(false);
+        onClose();
       }
-      onClose();
     } catch (error: any) {
       setErrors([error.message]);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -96,13 +93,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
   const toggleMode = () => {
     setMode(prev => prev === 'login' ? 'register' : 'login');
     setErrors([]);
-    setFormData({
-      username: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      rememberMe: false
-    });
+    setFormData(initialFormState);
   };
 
   return (
@@ -123,23 +114,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === 'register' && (
-            <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="username">
-                Username
-              </label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                value={formData.username}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter your username"
-              />
-            </div>
-          )}
-
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="email">
               Email

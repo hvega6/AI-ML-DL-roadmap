@@ -62,11 +62,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsLoading(true);
       setError(null);
-      const response = await authService.register(data);
+      const response = await authService.register({
+        email: data.email,
+        password: data.password
+      });
       const userData = response.user as User;
       setUser(userData);
       setIsAuthenticated(true);
       localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('accessToken', response.accessToken);
     } catch (err: any) {
       console.error('Registration error:', err);
       setError(err.message || 'Failed to register');
@@ -85,8 +89,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(userData);
       setIsAuthenticated(true);
       
+      // Store user data and tokens in localStorage
+      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('accessToken', response.accessToken);
+      
       if (remember) {
-        // Store refresh token or handle persistent session
         localStorage.setItem('refreshToken', response.refreshToken);
       }
     } catch (err: any) {

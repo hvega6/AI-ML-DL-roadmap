@@ -2,16 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { HomeIcon, BookOpenIcon, AcademicCapIcon, ArrowUpIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { useTheme } from '../context/ThemeContext';
-import { useParticles } from '../context/ParticleContext';
 import { Feature } from '../types';
 import Modal from '../components/Modal';
 import Register from './Register';
 import Login from './Login';
 import Footer from '../components/Footer';
+import AnimatedBackground from '../components/AnimatedBackground';
 
 const Home: React.FC = () => {
   const { isDarkMode } = useTheme();
-  const staticParticlesData = useParticles();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -83,122 +82,73 @@ const Home: React.FC = () => {
   };
 
   const renderParticles = () => {
-    return staticParticlesData.map((particle, i) => (
-      <div 
-        key={i} 
-        className="absolute rounded-full"
-        style={{
-          animation: `particleAnimation ${particle.duration}s infinite`,
-          animationDelay: `${particle.delay}s`,
-          backgroundColor: getParticleColor(particle.hue),
-          top: `${particle.top}%`,
-          left: `${particle.left}%`,
-          width: `${particle.particleSize}px`,
-          height: `${particle.particleSize}px`,
-          transform: `translate(${particle.translateX}px, ${particle.translateY}px) rotate(${particle.rotationAngle}deg)`,
-        }}
-      />
-    ));
+    return Array.from({ length: 100 }, (_, i) => {
+      const delay = Math.random() * 5;
+      const duration = 7 + Math.random() * 7;
+      const size = Math.random() * 3 + 1;
+      const startX = Math.random() * 100;
+      const startY = Math.random() * 100;
+      const endX = startX + (Math.random() * 200 - 100);
+      const endY = startY - Math.random() * 100;
+      
+      return (
+        <div
+          key={i}
+          className="absolute rounded-full mix-blend-screen"
+          style={{
+            width: `${size}px`,
+            height: `${size}px`,
+            left: `${startX}%`,
+            top: `${startY}%`,
+            backgroundColor: isDarkMode 
+              ? 'hsla(210, 100%, 80%, 0.5)'
+              : 'hsla(220, 100%, 95%, 0.5)',
+            animation: `
+              particle-move-${i} ${duration}s infinite ${delay}s,
+              particle-fade ${duration}s infinite ${delay}s
+            `,
+          }}
+        />
+      );
+    });
   };
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <div 
-        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
-                   w-0 h-0 perspective-[1000px] animate-[rotate_14s_infinite_linear]"
-        style={{
-          transformStyle: 'preserve-3d',
-        }}
-      >
-        {renderParticles()}
-      </div>
-      
       {/* Hero Section */}
-      <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-blue-400'} py-16 px-4 sm:px-6 lg:px-8 relative min-h-[80vh]`}>
-        {/* Particle Container */}
+      <div className={`relative min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-blue-400'}`}>
         <div className="absolute inset-0 overflow-hidden">
-          <style>{`
-            @keyframes particleAnimation {
-              0% { 
-                opacity: 0;
-                transform: translate(0, 0) scale(0);
-              }
-              50% { 
-                opacity: 1;
-                transform: translate(var(--moveX), var(--moveY)) scale(1);
-              }
-              100% { 
-                opacity: 0;
-                transform: translate(calc(var(--moveX) * 2), calc(var(--moveY) * 2)) scale(0);
-              }
-            }
+          <div className="absolute inset-0">
+            {renderParticles()}
+          </div>
+          <style>
+            {`
+              ${Array.from({ length: 100 }, (_, i) => {
+                const endX = Math.random() * 200 - 100;
+                const endY = -(Math.random() * 100);
+                return `
+                  @keyframes particle-move-${i} {
+                    0% {
+                      transform: translate(0, 0) scale(0);
+                    }
+                    50% {
+                      transform: translate(${endX/2}%, ${endY/2}%) scale(1);
+                    }
+                    100% {
+                      transform: translate(${endX}%, ${endY}%) scale(0);
+                    }
+                  }
+                `;
+              }).join('\n')}
 
-            @keyframes floatingParticle {
-              0%, 100% { 
-                transform: translate(0, 0) rotate(0deg);
+              @keyframes particle-fade {
+                0%, 100% { opacity: 0; }
+                20%, 80% { opacity: 0.8; }
               }
-              25% {
-                transform: translate(var(--floatX), var(--floatY)) rotate(90deg);
-              }
-              50% {
-                transform: translate(calc(var(--floatX) * 0.5), calc(var(--floatY) * 0.5)) rotate(180deg);
-              }
-              75% {
-                transform: translate(calc(var(--floatX) * -0.5), calc(var(--floatY) * -0.5)) rotate(270deg);
-              }
-            }
-          `}</style>
-
-          {/* Static floating particles */}
-          {staticParticlesData.map((particle, i) => (
-            <div 
-              key={`float-${i}`}
-              className="absolute rounded-full"
-              style={{
-                animation: `floatingParticle ${15 + Math.random() * 10}s infinite ease-in-out`,
-                backgroundColor: getParticleColor(particle.hue),
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                width: `${particle.particleSize}px`,
-                height: `${particle.particleSize}px`,
-                opacity: 0.7,
-                '--floatX': `${Math.random() * 100 - 50}px`,
-                '--floatY': `${Math.random() * 100 - 50}px`,
-              } as React.CSSProperties}
-            />
-          ))}
-
-          {/* Moving particles */}
-          {Array.from({ length: 100 }, (_, i) => {
-            const delay = Math.random() * 5;
-            const duration = 7 + Math.random() * 7;
-            const hue = Math.floor(Math.random() * 360);
-            const size = Math.random() * 3 + 1;
-            
-            const moveX = Math.random() * window.innerWidth - (window.innerWidth / 2);
-            const moveY = Math.random() * window.innerHeight - (window.innerHeight / 2);
-
-            return (
-              <div 
-                key={`particle-${i}`}
-                className="absolute rounded-full"
-                style={{
-                  animation: `particleAnimation ${duration}s infinite`,
-                  animationDelay: `${delay}s`,
-                  backgroundColor: `hsla(${hue}, 100%, 50%, 0.7)`,
-                  width: `${size}px`,
-                  height: `${size}px`,
-                  top: `${Math.random() * 100}%`,
-                  left: `${Math.random() * 100}%`,
-                  '--moveX': `${moveX}px`,
-                  '--moveY': `${moveY}px`,
-                } as React.CSSProperties}
-              />
-            );
-          })}
+            `}
+          </style>
         </div>
-
-        <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
+        <div className="relative z-10 max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
           <h1 className={`text-4xl font-extrabold tracking-tight ${isDarkMode ? 'text-white' : 'text-blue-900'} sm:text-5xl lg:text-6xl`}>
             Master AI, ML & Deep Learning
           </h1>
@@ -271,10 +221,11 @@ const Home: React.FC = () => {
       </div>
 
       {/* Main Image Section */}
-      <div
-        className={`relative overflow-hidden ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} py-8 sm:py-12`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative min-h-screen">
+        <div className="absolute inset-0">
+          <AnimatedBackground />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
           <div
             ref={imageRef}
             className="transform transition-all duration-1000 ease-in-out"

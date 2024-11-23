@@ -78,6 +78,17 @@ const Login: React.FC<LoginProps> = ({ isModal, onClose, onSwitchToRegister }) =
       const userData = await login(formData);
       console.log('Login successful, user:', userData);
       
+      // Reset form
+      setFormData({
+        email: '',
+        password: ''
+      });
+
+      // Close modal if in modal mode
+      if (isModal && onClose) {
+        onClose();
+      }
+      
       // Get the return path from location state or default to dashboard
       const defaultPath = '/dashboard';
       const redirectPath = location.state?.from?.pathname || defaultPath;

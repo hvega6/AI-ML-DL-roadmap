@@ -2,20 +2,22 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { HomeIcon, BookOpenIcon, AcademicCapIcon, ArrowUpIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { useTheme } from '../context/ThemeContext';
+import { useParticles } from '../context/ParticleContext';
 import { Feature } from '../types';
 import Modal from '../components/Modal';
 import Register from './Register';
 import Login from './Login';
 import Footer from '../components/Footer';
-import AnimatedBackground from '../components/AnimatedBackground';
 
 const Home: React.FC = () => {
   const { isDarkMode } = useTheme();
+  const particles = useParticles();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [isImageVisible, setIsImageVisible] = useState(false);
   const [isImageExpanded, setIsImageExpanded] = useState(false);
+  const heroRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -36,8 +38,8 @@ const Home: React.FC = () => {
         }
       },
       {
-        threshold: 0.5, // Trigger when 50% of the element is visible
-        rootMargin: '-100px 0px' // Adds a negative margin to delay the trigger
+        threshold: 0.5,
+        rootMargin: '-100px 0px'
       }
     );
 
@@ -53,10 +55,7 @@ const Home: React.FC = () => {
   }, []);
 
   const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const features: Feature[] = [
@@ -74,108 +73,89 @@ const Home: React.FC = () => {
     }
   ];
 
-  // Determine particle color based on current mode
-  const getParticleColor = (hue: number) => {
-    return isDarkMode 
-      ? `hsla(${hue}, 100%, 50%, 0.5)` 
-      : `hsla(${hue}, 100%, 50%, 0.7)`;
-  };
-
-  const renderParticles = () => {
-    return Array.from({ length: 100 }, (_, i) => {
-      const delay = Math.random() * 5;
-      const duration = 7 + Math.random() * 7;
-      const size = Math.random() * 3 + 1;
-      const startX = Math.random() * 100;
-      const startY = Math.random() * 100;
-      const endX = startX + (Math.random() * 200 - 100);
-      const endY = startY - Math.random() * 100;
-      
-      return (
-        <div
-          key={i}
-          className="absolute rounded-full mix-blend-screen"
-          style={{
-            width: `${size}px`,
-            height: `${size}px`,
-            left: `${startX}%`,
-            top: `${startY}%`,
-            backgroundColor: isDarkMode 
-              ? 'hsla(210, 100%, 80%, 0.5)'
-              : 'hsla(220, 100%, 95%, 0.5)',
-            animation: `
-              particle-move-${i} ${duration}s infinite ${delay}s,
-              particle-fade ${duration}s infinite ${delay}s
-            `,
-          }}
-        />
-      );
-    });
-  };
-
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Hero Section */}
-      <div className={`relative min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-blue-400'}`}>
+      <div className={`relative min-h-screen flex items-center ${isDarkMode ? 'bg-gray-900' : 'bg-blue-400'}`}>
+        {/* Particle Container */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute inset-0">
-            {renderParticles()}
+            {particles.map((particle, i) => (
+              <div
+                key={i}
+                className="absolute rounded-full mix-blend-screen"
+                style={{
+                  width: `${particle.particleSize}px`,
+                  height: `${particle.particleSize}px`,
+                  left: `${particle.left}%`,
+                  top: `${particle.top}%`,
+                  backgroundColor: isDarkMode 
+                    ? `hsla(${particle.hue}, 100%, 75%, 0.7)`
+                    : `hsla(${particle.hue}, 100%, 45%, 0.6)`,
+                  animation: `
+                    float-${i} ${particle.duration}s infinite ${particle.delay}s linear,
+                    fade ${particle.duration}s infinite ${particle.delay}s ease-in-out
+                  `,
+                  mixBlendMode: isDarkMode ? 'screen' : 'multiply',
+                }}
+              />
+            ))}
           </div>
           <style>
             {`
-              ${Array.from({ length: 100 }, (_, i) => {
-                const endX = Math.random() * 200 - 100;
-                const endY = -(Math.random() * 100);
-                return `
-                  @keyframes particle-move-${i} {
-                    0% {
-                      transform: translate(0, 0) scale(0);
-                    }
-                    50% {
-                      transform: translate(${endX/2}%, ${endY/2}%) scale(1);
-                    }
-                    100% {
-                      transform: translate(${endX}%, ${endY}%) scale(0);
-                    }
+              ${particles.map((particle, i) => `
+                @keyframes float-${i} {
+                  0% {
+                    transform: translate(0, 0) rotate(0deg) scale(0);
                   }
-                `;
-              }).join('\n')}
+                  50% {
+                    transform: translate(${particle.translateX/2}%, ${particle.translateY/2}%) rotate(${particle.rotationAngle/2}deg) scale(1);
+                  }
+                  100% {
+                    transform: translate(${particle.translateX}%, ${particle.translateY}%) rotate(${particle.rotationAngle}deg) scale(0);
+                  }
+                }
+              `).join('\n')}
 
-              @keyframes particle-fade {
+              @keyframes fade {
                 0%, 100% { opacity: 0; }
-                20%, 80% { opacity: 0.8; }
+                20%, 80% { opacity: 1; }
               }
             `}
           </style>
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
-          <h1 className={`text-4xl font-extrabold tracking-tight ${isDarkMode ? 'text-white' : 'text-blue-900'} sm:text-5xl lg:text-6xl`}>
-            Master AI, ML & Deep Learning
-          </h1>
-          <p className={`mt-6 text-xl ${isDarkMode ? 'text-gray-300' : 'text-blue-700'} max-w-3xl`}>
-            Your comprehensive learning platform for Artificial Intelligence, Machine Learning, and Deep Learning. Start your journey from basics to advanced concepts with structured learning paths.
-          </p>
-          <div className="mt-10 flex space-x-4">
-            <button
-              onClick={() => setIsRegisterModalOpen(true)}
-              className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-base 
-                ${isDarkMode 
-                  ? 'bg-blue-500 hover:bg-blue-600' 
-                  : 'bg-blue-500 hover:bg-blue-600 text-white'
-                } transition-colors duration-200`}
-            >
-              Start Learning
-            </button>
-            <Link 
-              to="/curriculum" 
-              className={`inline-flex items-center px-6 py-3 border border-white text-base font-medium rounded-md 
-                ${isDarkMode 
-                  ? 'text-white hover:bg-blue-600' 
-                  : 'text-blue-900 border-blue-900 hover:bg-blue-600 hover:text-white'
-                } transition-colors duration-200`}
-            >
-              View Curriculum
-            </Link>
+
+        {/* Hero Content */}
+        <div className="relative z-10 w-full">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h1 className={`text-4xl font-extrabold tracking-tight ${isDarkMode ? 'text-white' : 'text-blue-900'} sm:text-5xl lg:text-6xl`}>
+              Master AI, ML & Deep Learning
+            </h1>
+            <p className={`mt-6 text-xl ${isDarkMode ? 'text-gray-300' : 'text-blue-900'} max-w-3xl`}>
+              Your comprehensive learning platform for Artificial Intelligence, Machine Learning, and Deep Learning. Start your journey from basics to advanced concepts with structured learning paths.
+            </p>
+            <div className="mt-10 flex space-x-4">
+              <button
+                onClick={() => setIsRegisterModalOpen(true)}
+                className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white 
+                  ${isDarkMode 
+                    ? 'bg-blue-500 hover:bg-blue-600' 
+                    : 'bg-blue-500 hover:bg-blue-600'
+                  } transition-colors duration-200`}
+              >
+                Start Learning
+              </button>
+              <Link 
+                to="/curriculum" 
+                className={`inline-flex items-center px-6 py-3 border text-base font-medium rounded-md 
+                  ${isDarkMode 
+                    ? 'text-white hover:bg-blue-600 border-white' 
+                    : 'text-blue-900 border-blue-900 hover:bg-blue-600 hover:text-white'
+                  } transition-colors duration-200`}
+              >
+                View Curriculum
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -221,59 +201,78 @@ const Home: React.FC = () => {
       </div>
 
       {/* Main Image Section */}
-      <div className="relative min-h-screen">
-        <div className="absolute inset-0">
-          <AnimatedBackground />
+      <div className={`relative min-h-screen flex items-center ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <div className="absolute inset-x-0 top-12 bottom-2">
+          {particles.map((particle, i) => (
+            <div
+              key={`section-particle-${i}`}
+              className="absolute rounded-full mix-blend-screen"
+              style={{
+                width: `${particle.particleSize}px`,
+                height: `${particle.particleSize}px`,
+                left: `${particle.left}%`,
+                top: `${particle.top}%`,
+                backgroundColor: isDarkMode 
+                  ? `hsla(${particle.hue}, 100%, 75%, 0.7)`
+                  : `hsla(${particle.hue}, 100%, 45%, 0.6)`,
+                animation: `
+                  float-${i} ${particle.duration}s infinite ${particle.delay}s linear,
+                  fade ${particle.duration}s infinite ${particle.delay}s ease-in-out
+                `,
+                mixBlendMode: isDarkMode ? 'screen' : 'multiply',
+              }}
+            />
+          ))}
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-          <div
-            ref={imageRef}
-            className="transform transition-all duration-1000 ease-in-out"
-          >
-            {/* Mobile View */}
-            <div className={`block sm:hidden transform transition-all duration-1000 ease-in-out ${
-              isImageVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'
-            }`}>
-              <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 mb-4 ${
-                isDarkMode ? 'bg-gray-800' : 'bg-white'
-              }`}>
-                <button
-                  onClick={() => setIsImageExpanded(!isImageExpanded)}
-                  className="w-full flex items-center justify-between p-2 text-left"
-                >
-                  <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    View AI Learning Roadmap
-                  </span>
-                  {isImageExpanded ? (
-                    <ChevronUpIcon className="h-5 w-5" />
-                  ) : (
-                    <ChevronDownIcon className="h-5 w-5" />
+        <div className="relative z-10 w-full py-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div
+              ref={imageRef}
+              className={`transform transition-all duration-1000 ease-in-out ${
+                isImageVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'
+              }`}
+            >
+              {/* Mobile View */}
+              <div className="block sm:hidden">
+                <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 mb-4 ${
+                  isDarkMode ? 'bg-gray-800' : 'bg-white'
+                }`}>
+                  <button
+                    onClick={() => setIsImageExpanded(!isImageExpanded)}
+                    className="w-full flex items-center justify-between p-2 text-left"
+                  >
+                    <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      View AI Learning Roadmap
+                    </span>
+                    {isImageExpanded ? (
+                      <ChevronUpIcon className="h-5 w-5" />
+                    ) : (
+                      <ChevronDownIcon className="h-5 w-5" />
+                    )}
+                  </button>
+                  {isImageExpanded && (
+                    <div className="mt-4">
+                      <img
+                        src="/src/public/main/infography.png"
+                        alt="AI Learning Roadmap Infographic"
+                        className="w-full h-auto rounded-lg shadow-sm"
+                      />
+                    </div>
                   )}
-                </button>
-                {isImageExpanded && (
-                  <div className="mt-4">
+                </div>
+              </div>
+
+              {/* Desktop View */}
+              <div className="hidden sm:block">
+                <div className="relative group cursor-pointer p-4">
+                  <div className="transform-gpu transition-transform duration-300 ease-out group-hover:scale-105">
                     <img
-                      src={new URL('/src/public/main/infography.png', import.meta.url).href}
+                      src="/src/public/main/infography.png"
                       alt="AI Learning Roadmap Infographic"
-                      className="w-full h-auto rounded-lg shadow-sm"
+                      className="mx-auto w-full h-auto rounded-lg shadow-lg"
+                      style={{ maxWidth: '1300px' }}
                     />
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* Desktop View */}
-            <div className={`hidden sm:block transform transition-all duration-1000 ease-in-out ${
-              isImageVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-32'
-            }`}>
-              <div className="relative group cursor-pointer p-4">
-                <div className="transform-gpu transition-transform duration-300 ease-out group-hover:scale-105">
-                  <img
-                    src={new URL('/src/public/main/infography.png', import.meta.url).href}
-                    alt="AI Learning Roadmap Infographic"
-                    className="mx-auto w-full h-auto rounded-lg shadow-lg"
-                    style={{ maxWidth: '1000px' }}
-                  />
                 </div>
               </div>
             </div>

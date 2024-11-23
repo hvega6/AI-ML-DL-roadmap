@@ -45,7 +45,11 @@ const InteractiveDemo: React.FC<DemoProps> = ({ demoType, videoUrl, data }) => {
       centroids = tf.stack(newCentroids);
 
       // Visualize current state
-      drawClusters(points.arraySync(), centroids.arraySync(), assignments.arraySync());
+      drawClusters(
+        points.arraySync() as number[][],
+        centroids.arraySync() as number[][],
+        assignments.arraySync() as number[]
+      );
     }
   };
 

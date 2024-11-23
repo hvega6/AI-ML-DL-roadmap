@@ -80,7 +80,7 @@ const login: AsyncRequestHandler<{}, any, LoginBody> = async (req, res) => {
     const { email, password } = req.body;
 
     // Check if user exists
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email });
     if (!user) {
       res.status(400).json({ message: 'Invalid credentials' });
       return;
@@ -96,7 +96,9 @@ const login: AsyncRequestHandler<{}, any, LoginBody> = async (req, res) => {
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(user._id.toString());
 
+    // Return user data and tokens
     res.json({
+      message: 'Login successful',
       user: {
         id: user._id,
         email: user.email,
@@ -108,7 +110,7 @@ const login: AsyncRequestHandler<{}, any, LoginBody> = async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error during login' });
   }
 };
 

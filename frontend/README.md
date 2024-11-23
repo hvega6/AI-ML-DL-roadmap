@@ -99,7 +99,7 @@ The dashboard provides three key visualizations:
 
 ### Environment Variables
 Create a `.env` file with:
-```
+```bash
 REACT_APP_API_URL=your_backend_api_url
 REACT_APP_JWT_SECRET=your_jwt_secret
 ```
@@ -140,3 +140,134 @@ REACT_APP_JWT_SECRET=your_jwt_secret
 ---
 
 **Happy Learning! 🧠📚**
+
+# 🎨 AI Learning Platform Frontend
+
+[![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-4.9.5-blue.svg)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.3.0-38B2AC.svg)](https://tailwindcss.com/)
+[![Vite](https://img.shields.io/badge/Vite-4.1.0-646CFF.svg)](https://vitejs.dev/)
+
+Modern, responsive frontend for the AI Learning Platform built with React, TypeScript, and Tailwind CSS.
+
+## ✨ Features
+
+- 🎯 **Component Architecture**: Modular and reusable React components
+- 🌈 **Theme Support**: Dynamic dark/light mode with Tailwind
+- 🎨 **Particle System**: Interactive background animations
+- 📱 **Responsive Design**: Mobile-first approach
+- 🔐 **Authentication**: JWT-based user authentication
+- 🚀 **Performance**: Optimized builds with Vite
+
+## 🛠️ Project Structure
+
+```
+frontend/
+├── public/           # Static assets
+├── src/
+│   ├── components/   # Reusable UI components
+│   ├── context/     # React context providers
+│   ├── hooks/       # Custom React hooks
+│   ├── views/       # Page components
+│   ├── types/       # TypeScript type definitions
+│   ├── utils/       # Utility functions
+│   ├── App.tsx      # Root component
+│   └── main.tsx     # Entry point
+├── package.json     # Dependencies and scripts
+└── vite.config.ts   # Vite configuration
+```
+
+## 🚀 Quick Start
+
+1. Install dependencies:
+```bash
+npm install
+```
+
+2. Set up environment variables:
+```bash
+# .env
+VITE_API_URL=http://localhost:5000
+```
+
+3. Start development server:
+```bash
+npm run dev
+```
+
+4. Build for production:
+```bash
+npm run build
+```
+
+## 🧪 Key Dependencies
+
+- **@headlessui/react**: UI components
+- **@heroicons/react**: Icon components
+- **react-router-dom**: Routing
+- **axios**: API requests
+- **tailwindcss**: Styling
+- **typescript**: Type safety
+- **vite**: Build tool
+
+## 🎨 Styling
+
+We use Tailwind CSS for styling with custom configuration:
+
+- Custom color schemes
+- Responsive breakpoints
+- Dark mode support
+- Custom animations
+
+## 🔧 Development Tools
+
+- **TypeScript** for type safety
+- **ESLint** for code linting
+- **Prettier** for code formatting
+- **Vite** for fast development and optimized builds
+
+## 📱 Responsive Design
+
+- Mobile-first approach
+- Breakpoints:
+  - sm: 640px
+  - md: 768px
+  - lg: 1024px
+  - xl: 1280px
+  - 2xl: 1536px
+
+## 🎯 Best Practices
+
+- Component composition
+- Custom hooks for logic reuse
+- Context for state management
+- Lazy loading for optimized loading
+- TypeScript for type safety
+- Consistent code formatting
+
+## 🔄 State Management
+
+- React Context for global state
+- Custom hooks for local state
+- JWT token management
+- Theme persistence
+- Form state handling
+
+## 🚀 Performance Optimization
+
+- Code splitting
+- Lazy loading
+- Image optimization
+- CSS purging
+- Bundle size optimization
+
+## 📝 Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+---
+Made with ❤️ using React and TypeScript

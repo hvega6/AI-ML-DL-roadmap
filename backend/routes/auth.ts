@@ -52,14 +52,14 @@ const register: AsyncRequestHandler<{}, any, RegisterBody> = async (req, res) =>
     await user.save();
 
     // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(user.id);
+    const { accessToken, refreshToken } = generateTokens(user);
 
     res.status(201).json({
       message: 'User registered successfully',
       user: {
-        id: user.id,
         email: user.email,
-        role: user.role
+        role: user.role,
+        preferences: user.preferences
       },
       accessToken,
       refreshToken

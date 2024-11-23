@@ -79,9 +79,10 @@ const authService = {
       const response = await axios.post(`${API_URL}/register`, data);
       const { accessToken, refreshToken, user } = response.data;
       
-      // Store tokens
+      // Store tokens and user data
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('user', JSON.stringify(user));
       
       return response.data;
     } catch (error: any) {
@@ -97,9 +98,10 @@ const authService = {
       const response = await axios.post(`${API_URL}/login`, data);
       const { accessToken, refreshToken, user } = response.data;
       
-      // Store tokens
+      // Store tokens and user data
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('user', JSON.stringify(user));
       
       return response.data;
     } catch (error: any) {
@@ -110,40 +112,47 @@ const authService = {
     }
   },
 
-  logout: () => {
+  logout() {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
-    window.location.href = '/';
+    // Clear axios default header
+    delete axios.defaults.headers.common['Authorization'];
   },
 
-  getCurrentUser: () => {
+  getCurrentUser() {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return null;
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return null;
-
-      const decoded = jwtDecode<{ userId: string; email: string; role: string }>(token);
-      return {
-        id: decoded.userId,
-        email: decoded.email,
-        role: decoded.role
-      };
-    } catch (error) {
+      return JSON.parse(userStr);
+    } catch {
       return null;
     }
   },
 
-  getToken: () => localStorage.getItem('accessToken'),
+  getToken() {
+    return localStorage.getItem('accessToken');
+  },
 
-  getRefreshToken: () => localStorage.getItem('refreshToken'),
+  getRefreshToken() {
+    return localStorage.getItem('refreshToken');
+  },
 
-  isAuthenticated: () => {
-    const token = localStorage.getItem('accessToken');
+  isAuthenticated() {
+    const token = this.getToken();
     if (!token) return false;
 
     try {
-      const decoded = jwtDecode<{ exp: number }>(token);
-      return decoded.exp * 1000 > Date.now();
+      const decoded: any = jwtDecode(token);
+      const currentTime = Date.now() / 1000;
+      
+      // Check if token is expired
+      if (decoded.exp < currentTime) {
+        this.logout();
+        return false;
+      }
+      
+      return true;
     } catch {
       return false;
     }

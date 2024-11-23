@@ -114,125 +114,118 @@ const Home: React.FC = () => {
       </div>
       
       {/* Hero Section */}
-      <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-blue-400'} py-16 px-4 sm:px-6 lg:px-8 relative`}>
-        <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
+      <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-blue-400'} py-16 px-4 sm:px-6 lg:px-8 relative min-h-[80vh]`}>
+        {/* Particle Container */}
+        <div className="absolute inset-0 overflow-hidden">
           <style>{`
             @keyframes particleAnimation {
-              0%, 100% { 
+              0% { 
                 opacity: 0;
-                transform: scale(0) translateX(0) translateY(0);
+                transform: translate(0, 0) scale(0);
               }
-              20%, 80% { 
+              50% { 
                 opacity: 1;
-                transform: scale(1) translateX(calc(var(--translate-x))) translateY(calc(var(--translate-y)));
+                transform: translate(var(--moveX), var(--moveY)) scale(1);
+              }
+              100% { 
+                opacity: 0;
+                transform: translate(calc(var(--moveX) * 2), calc(var(--moveY) * 2)) scale(0);
               }
             }
 
-            @keyframes hoverAnimation {
+            @keyframes floatingParticle {
               0%, 100% { 
-                opacity: 0;
-                transform: 
-                  scale(0) 
-                  translateX(calc(-4px + 4px)) 
-                  translateY(calc(-4px + 4px))
-                  rotate(0deg);
+                transform: translate(0, 0) rotate(0deg);
               }
-              20%, 80% { 
-                opacity: 1;
-                transform: 
-                  scale(1) 
-                  translateX(calc(-2px + 2px)) 
-                  translateY(calc(-2px + 2px))
-                  rotate(0deg);
+              25% {
+                transform: translate(var(--floatX), var(--floatY)) rotate(90deg);
               }
               50% {
-                transform: 
-                  scale(1) 
-                  translateX(calc(-6px + 6px)) 
-                  translateY(calc(-6px + 6px))
-                  rotate(0deg);
+                transform: translate(calc(var(--floatX) * 0.5), calc(var(--floatY) * 0.5)) rotate(180deg);
+              }
+              75% {
+                transform: translate(calc(var(--floatX) * -0.5), calc(var(--floatY) * -0.5)) rotate(270deg);
               }
             }
           `}</style>
-          <div 
-            className="absolute inset-0 overflow-hidden pointer-events-none z-0"
-          >
-            {/* Hovering Stationary Particles */}
-            {staticParticlesData.map((particle, i) => (
+
+          {/* Static floating particles */}
+          {staticParticlesData.map((particle, i) => (
+            <div 
+              key={`float-${i}`}
+              className="absolute rounded-full"
+              style={{
+                animation: `floatingParticle ${15 + Math.random() * 10}s infinite ease-in-out`,
+                backgroundColor: getParticleColor(particle.hue),
+                top: `${Math.random() * 100}%`,
+                left: `${Math.random() * 100}%`,
+                width: `${particle.particleSize}px`,
+                height: `${particle.particleSize}px`,
+                opacity: 0.7,
+                '--floatX': `${Math.random() * 100 - 50}px`,
+                '--floatY': `${Math.random() * 100 - 50}px`,
+              } as React.CSSProperties}
+            />
+          ))}
+
+          {/* Moving particles */}
+          {Array.from({ length: 100 }, (_, i) => {
+            const delay = Math.random() * 5;
+            const duration = 7 + Math.random() * 7;
+            const hue = Math.floor(Math.random() * 360);
+            const size = Math.random() * 3 + 1;
+            
+            const moveX = Math.random() * window.innerWidth - (window.innerWidth / 2);
+            const moveY = Math.random() * window.innerHeight - (window.innerHeight / 2);
+
+            return (
               <div 
-                key={`hover-${i}`} 
+                key={`particle-${i}`}
                 className="absolute rounded-full"
                 style={{
-                  animation: `hoverAnimation ${particle.duration}s infinite`,
-                  animationDelay: `${particle.delay}s`,
-                  backgroundColor: getParticleColor(particle.hue),
-                  top: `${particle.top}%`,
-                  left: `${particle.left}%`,
-                  width: `${particle.particleSize}px`,
-                  height: `${particle.particleSize}px`,
-                  transform: `translate(${particle.translateX}px, ${particle.translateY}px) rotate(${particle.rotationAngle}deg)`,
-                }}
+                  animation: `particleAnimation ${duration}s infinite`,
+                  animationDelay: `${delay}s`,
+                  backgroundColor: `hsla(${hue}, 100%, 50%, 0.7)`,
+                  width: `${size}px`,
+                  height: `${size}px`,
+                  top: `${Math.random() * 100}%`,
+                  left: `${Math.random() * 100}%`,
+                  '--moveX': `${moveX}px`,
+                  '--moveY': `${moveY}px`,
+                } as React.CSSProperties}
               />
-            ))}
-            
-            {/* Random Moving Particles */}
-            {Array.from({ length: 300 }, (_, i) => {
-              const delay = Math.random() * 5;
-              const duration = 5 + Math.random() * 5;
-              const hue = Math.floor(Math.random() * 360);
-              
-              // Calculate translation with larger range
-              const translateX = (Math.random() * 400 - 200) + 'px';
-              const translateY = (Math.random() * 400 - 200) + 'px';
+            );
+          })}
+        </div>
 
-              return (
-                <div 
-                  key={`move-${i}`} 
-                  className="absolute w-[2px] h-[2px] rounded-full"
-                  style={{
-                    animation: `particleAnimation ${duration}s infinite`,
-                    animationDelay: `${delay}s`,
-                    backgroundColor: `hsla(${hue}, 100%, 50%, 0.7)`,
-                    top: `${Math.random() * 120}%`,
-                    left: `${Math.random() * 120}%`,
-                    '--translate-x': translateX,
-                    '--translate-y': translateY,
-                    transform: 'translate(-50%, -50%)', // Center each particle
-                  }}
-                />
-              );
-            })}
-          </div>
-          
-          <div className="relative z-10">
-            <h1 className={`text-4xl font-extrabold tracking-tight ${isDarkMode ? 'text-white' : 'text-blue-900'} sm:text-5xl lg:text-6xl`}>
-              Master AI, ML & Deep Learning
-            </h1>
-            <p className={`mt-6 text-xl ${isDarkMode ? 'text-gray-300' : 'text-blue-700'} max-w-3xl`}>
-              Your comprehensive learning platform for Artificial Intelligence, Machine Learning, and Deep Learning. Start your journey from basics to advanced concepts with structured learning paths.
-            </p>
-            <div className="mt-10 flex space-x-4">
-              <button
-                onClick={() => setIsRegisterModalOpen(true)}
-                className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-base 
-                  ${isDarkMode 
-                    ? 'bg-blue-500 hover:bg-blue-600' 
-                    : 'bg-blue-500 hover:bg-blue-600 text-white'
-                  } transition-colors duration-200`}
-              >
-                Start Learning
-              </button>
-              <Link 
-                to="/curriculum" 
-                className={`inline-flex items-center px-6 py-3 border border-white text-base font-medium rounded-md 
-                  ${isDarkMode 
-                    ? 'text-white hover:bg-blue-600' 
-                    : 'text-blue-900 border-blue-900 hover:bg-blue-600 hover:text-white'
-                  } transition-colors duration-200`}
-              >
-                View Curriculum
-              </Link>
-            </div>
+        <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
+          <h1 className={`text-4xl font-extrabold tracking-tight ${isDarkMode ? 'text-white' : 'text-blue-900'} sm:text-5xl lg:text-6xl`}>
+            Master AI, ML & Deep Learning
+          </h1>
+          <p className={`mt-6 text-xl ${isDarkMode ? 'text-gray-300' : 'text-blue-700'} max-w-3xl`}>
+            Your comprehensive learning platform for Artificial Intelligence, Machine Learning, and Deep Learning. Start your journey from basics to advanced concepts with structured learning paths.
+          </p>
+          <div className="mt-10 flex space-x-4">
+            <button
+              onClick={() => setIsRegisterModalOpen(true)}
+              className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-base 
+                ${isDarkMode 
+                  ? 'bg-blue-500 hover:bg-blue-600' 
+                  : 'bg-blue-500 hover:bg-blue-600 text-white'
+                } transition-colors duration-200`}
+            >
+              Start Learning
+            </button>
+            <Link 
+              to="/curriculum" 
+              className={`inline-flex items-center px-6 py-3 border border-white text-base font-medium rounded-md 
+                ${isDarkMode 
+                  ? 'text-white hover:bg-blue-600' 
+                  : 'text-blue-900 border-blue-900 hover:bg-blue-600 hover:text-white'
+                } transition-colors duration-200`}
+            >
+              View Curriculum
+            </Link>
           </div>
         </div>
       </div>

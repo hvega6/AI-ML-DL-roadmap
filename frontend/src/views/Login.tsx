@@ -40,21 +40,12 @@ const Login: React.FC<LoginProps> = ({ isModal, onClose, onSwitchToRegister }) =
   useEffect(() => {
     if (user) {
       // Get the return path from location state or default to dashboard
-      const returnPath = location.state?.returnTo;
-      const fromPath = location.state?.from?.pathname;
-      
-      if (isModal && onClose) {
-        onClose();
-      } else {
-        // Priority order for redirection:
-        // 1. Specific return path if provided
-        // 2. Previous location path if it exists
-        // 3. Role-based dashboard as default
-        const redirectTo = returnPath || fromPath || (user.role === 'admin' ? '/admin/dashboard' : '/dashboard');
-        history.push(redirectTo);
-      }
+      const defaultPath = '/dashboard';
+      const redirectPath = location.state?.from?.pathname || defaultPath;
+      console.log('Redirecting to:', redirectPath);
+      history.replace(redirectPath);
     }
-  }, [user, history, location.state, isModal, onClose]);
+  }, [user, history, location.state]);
 
   // Handle logout redirection
   const handleLogout = async () => {
@@ -88,11 +79,12 @@ const Login: React.FC<LoginProps> = ({ isModal, onClose, onSwitchToRegister }) =
       console.log('Login successful, user:', userData);
       
       // Get the return path from location state or default to dashboard
-      const { from } = location.state as LocationState || { from: { pathname: '/dashboard' } };
-      console.log('Redirecting to:', from.pathname);
+      const defaultPath = '/dashboard';
+      const redirectPath = location.state?.from?.pathname || defaultPath;
+      console.log('Redirecting to:', redirectPath);
       
       // Use replace instead of push to avoid breaking the back button
-      history.replace(from.pathname);
+      history.replace(redirectPath);
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message || 'Failed to login');

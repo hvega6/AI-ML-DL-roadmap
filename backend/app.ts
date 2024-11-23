@@ -28,19 +28,25 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI!, {
+const dbName = process.env.DATABASE_NAME || 'ai_roadmap';
+const mongoUri = process.env.MONGODB_URI!;
+const fullUri = mongoUri.includes('mongodb+srv') ? 
+  mongoUri.replace('mongodb+srv://', `mongodb+srv://${dbName}:`) : 
+  `${mongoUri}/${dbName}`;
+
+mongoose.connect(fullUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 } as mongoose.ConnectOptions)
   .then(() => {
     console.log('Connected to MongoDB successfully');
-    console.log(`Database: ${process.env.DATABASE_NAME}`);
+    console.log(`Database: ${dbName}`);
   })
   .catch((error) => {
     console.error('MongoDB connection error:', error);
     console.error('Connection Details:', {
-      database: process.env.DATABASE_NAME,
-      uri: process.env.MONGODB_URI?.replace(/:([^:@]{8})[^:@]*@/, ':****@') // Mask credentials
+      database: dbName,
+      uri: fullUri.replace(/:([^:@]{8})[^:@]*@/, ':****@') // Mask credentials
     });
     // Don't exit process, let the error handler deal with it
   });

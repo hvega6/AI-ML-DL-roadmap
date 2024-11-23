@@ -8,13 +8,25 @@ import {
   BookOpenIcon,
   ChartBarIcon,
   BookmarkIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  UserCircleIcon,
+  AdjustmentsHorizontalIcon,
+  SunIcon,
+  MoonIcon
 } from '@heroicons/react/24/outline';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import Modal from './Modal';
 import Login from '../views/Login';
 import Register from '../views/Register';
+
+interface IUser {
+  email: string;
+  role: 'student' | 'admin';
+  preferences: {
+    theme: 'light' | 'dark';
+  };
+}
 
 const Navigation: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,19 +37,47 @@ const Navigation: React.FC = () => {
   const history = useHistory();
   const location = useLocation();
 
+  const handleCloseModals = () => {
+    setIsLoginModalOpen(false);
+    setIsRegisterModalOpen(false);
+  };
+
+  const switchToRegister = () => {
+    setIsLoginModalOpen(false);
+    setIsRegisterModalOpen(true);
+  };
+
+  const switchToLogin = () => {
+    setIsRegisterModalOpen(false);
+    setIsLoginModalOpen(true);
+  };
+
   const publicNavigation = [
     { name: 'Home', href: '/', icon: HomeIcon },
     { name: 'What We Teach', href: '/curriculum', icon: AcademicCapIcon },
     { name: 'Resources', href: '/resources', icon: BookmarkIcon },
   ];
 
-  const privateNavigation = [
+  const studentNavigation = [
     { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
     { name: 'Lessons', href: '/lessons', icon: BookOpenIcon },
     { name: 'Resources', href: '/resources', icon: BookmarkIcon },
+    { name: 'Profile', href: '/profile', icon: UserCircleIcon },
   ];
 
-  const navigation = user ? privateNavigation : publicNavigation;
+  const adminNavigation = [
+    { name: 'Admin Dashboard', href: '/admin/dashboard', icon: ChartBarIcon },
+    { name: 'Manage Lessons', href: '/admin/lessons', icon: BookOpenIcon },
+    { name: 'Manage Users', href: '/admin/users', icon: UserCircleIcon },
+    { name: 'Settings', href: '/admin/settings', icon: AdjustmentsHorizontalIcon },
+  ];
+
+  const getNavigation = () => {
+    if (!user) return publicNavigation;
+    return user.role === 'admin' ? adminNavigation : studentNavigation;
+  };
+
+  const navigation = getNavigation();
 
   const isActive = (path: string) => {
     if (path === '/' && location.pathname !== '/') {
@@ -46,24 +86,30 @@ const Navigation: React.FC = () => {
     return location.pathname.startsWith(path);
   };
 
-  // Redirect authenticated users to dashboard from public pages
+  // Enhanced secure routes with role-based access
   useEffect(() => {
     if (user) {
-      const publicPaths = ['/', '/curriculum'];
-      if (publicPaths.includes(location.pathname)) {
-        if (user.role === 'admin') {
-          history.push('/admin/dashboard');
-        } else {
-          history.push('/dashboard');
-        }
-      }
-    }
-  }, [user, location.pathname, history]);
+      const publicPaths = ['/', '/curriculum', '/resources'];
+      const adminPaths = ['/admin'];
+      const studentPaths = ['/dashboard', '/lessons', '/profile'];
 
-  // Redirect non-authenticated users to home from protected pages
-  useEffect(() => {
-    if (!user) {
-      const protectedPaths = ['/dashboard', '/admin/dashboard', '/lessons', '/resources'];
+      // Redirect from public paths to appropriate dashboard
+      if (publicPaths.includes(location.pathname)) {
+        history.push(user.role === 'admin' ? '/admin/dashboard' : '/dashboard');
+      }
+
+      // Prevent students from accessing admin routes
+      if (user.role === 'student' && adminPaths.some(path => location.pathname.startsWith(path))) {
+        history.push('/dashboard');
+      }
+
+      // Prevent admins from accessing student routes
+      if (user.role === 'admin' && studentPaths.some(path => location.pathname.startsWith(path))) {
+        history.push('/admin/dashboard');
+      }
+    } else {
+      // Redirect non-authenticated users from protected routes
+      const protectedPaths = ['/dashboard', '/admin', '/lessons', '/profile'];
       if (protectedPaths.some(path => location.pathname.startsWith(path))) {
         history.push('/');
       }
@@ -237,26 +283,20 @@ const Navigation: React.FC = () => {
       </div>
 
       {/* Login Modal */}
-      <Modal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)}>
+      <Modal isOpen={isLoginModalOpen} onClose={handleCloseModals}>
         <Login 
           isModal={true} 
-          onClose={() => setIsLoginModalOpen(false)}
-          onSwitchToRegister={() => {
-            setIsLoginModalOpen(false);
-            setIsRegisterModalOpen(true);
-          }}
+          onClose={handleCloseModals}
+          onSwitchToRegister={switchToRegister}
         />
       </Modal>
 
       {/* Register Modal */}
-      <Modal isOpen={isRegisterModalOpen} onClose={() => setIsRegisterModalOpen(false)}>
+      <Modal isOpen={isRegisterModalOpen} onClose={handleCloseModals}>
         <Register 
           isModal={true} 
-          onClose={() => setIsRegisterModalOpen(false)}
-          onSwitchToLogin={() => {
-            setIsRegisterModalOpen(false);
-            setIsLoginModalOpen(true);
-          }}
+          onClose={handleCloseModals}
+          onSwitchToLogin={switchToLogin}
         />
       </Modal>
     </nav>

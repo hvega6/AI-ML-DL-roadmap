@@ -58,7 +58,6 @@ npm install
 # Backend .env
 MONGODB_URI=your_mongodb_uri
 JWT_SECRET=your_jwt_secret
-OPENAI_API_KEY=your_openai_api_key
 
 # Frontend .env
 VITE_API_URL=http://localhost:5000
@@ -72,7 +71,7 @@ npm run dev
 
 # Backend (http://localhost:5000)
 cd backend
-npm run dev
+npm start
 ```
 
 ## 📖 Project Structure

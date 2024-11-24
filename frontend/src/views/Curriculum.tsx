@@ -34,152 +34,120 @@ const Curriculum: React.FC = () => {
   };
 
   const topics = [
-    // Phase 1: Fundamentals and Basic Concepts
+    // Phase 1
     {
       title: "Introduction to AI, ML, and DL",
       description: "Understanding AI fundamentals and their real-world applications",
       icon: <BookOpenIcon className="w-6 h-6" />,
-      date: "Week 1",
-      phase: "Phase 1: Fundamentals",
-      phaseNumber: 1,
+      date: "Phase 1 - Week 1",
       weekNumber: 1,
     },
     {
       title: "Machine Learning Workflows",
       description: "ML pipeline steps and learning types",
       icon: <ChartBarIcon className="w-6 h-6" />,
-      date: "Week 2",
-      phase: "Phase 1: Fundamentals",
-      phaseNumber: 1,
+      date: "Phase 1 - Week 2",
       weekNumber: 2,
     },
     {
       title: "Neural Networks for Image Classification",
       description: "Understanding neural networks and CNNs",
       icon: <CogIcon className="w-6 h-6" />,
-      date: "Week 3",
-      phase: "Phase 1: Fundamentals",
-      phaseNumber: 1,
+      date: "Phase 1 - Week 3",
       weekNumber: 3,
     },
     {
       title: "Data Augmentation",
       description: "Techniques for model generalization",
       icon: <BeakerIcon className="w-6 h-6" />,
-      date: "Week 4",
-      phase: "Phase 1: Fundamentals",
-      phaseNumber: 1,
+      date: "Phase 1 - Week 4",
       weekNumber: 4,
     },
     {
       title: "Training Basics",
       description: "Neural network training fundamentals",
       icon: <AcademicCapIcon className="w-6 h-6" />,
-      date: "Week 5",
-      phase: "Phase 1: Fundamentals",
-      phaseNumber: 1,
+      date: "Phase 1 - Week 5",
       weekNumber: 5,
     },
     {
       title: "Capstone One: Image Classification Pipeline",
       description: "Build a CNN pipeline to classify CIFAR-10 images",
       icon: <CpuChipIcon className="w-6 h-6" />,
-      date: "Week 6",
-      phase: "Phase 1: Fundamentals",
-      phaseNumber: 1,
+      date: "Phase 1 - Week 6",
       weekNumber: 6,
     },
-    // Phase 2: Intermediate Techniques
+    // Phase 2
     {
       title: "Natural Language Processing (NLP) Basics",
       description: "Text preprocessing and applications",
       icon: <BookOpenIcon className="w-6 h-6" />,
-      date: "Week 7",
-      phase: "Phase 2: Intermediate",
-      phaseNumber: 2,
+      date: "Phase 2 - Week 1",
       weekNumber: 7,
     },
     {
       title: "Advanced NLP Models",
       description: "Transformer models and transfer learning",
       icon: <CloudIcon className="w-6 h-6" />,
-      date: "Week 8",
-      phase: "Phase 2: Intermediate",
-      phaseNumber: 2,
+      date: "Phase 2 - Week 2",
       weekNumber: 8,
     },
     {
       title: "Speech Recognition",
       description: "Audio processing and feature extraction",
       icon: <BeakerIcon className="w-6 h-6" />,
-      date: "Week 9",
-      phase: "Phase 2: Intermediate",
-      phaseNumber: 2,
+      date: "Phase 2 - Week 3",
       weekNumber: 9,
     },
     {
       title: "Robotics and Motion Planning",
       description: "Robotics fundamentals and pathfinding",
       icon: <CogIcon className="w-6 h-6" />,
-      date: "Week 10",
-      phase: "Phase 2: Intermediate",
-      phaseNumber: 2,
+      date: "Phase 2 - Week 4",
       weekNumber: 10,
     },
     {
       title: "Hardware Acceleration",
       description: "GPU programming and optimization",
       icon: <CpuChipIcon className="w-6 h-6" />,
-      date: "Week 11",
-      phase: "Phase 2: Intermediate",
-      phaseNumber: 2,
+      date: "Phase 2 - Week 5",
       weekNumber: 11,
     },
     {
       title: "Capstone Two: Multimodal AI System",
       description: "Create a system integrating NLP and speech recognition",
       icon: <AcademicCapIcon className="w-6 h-6" />,
-      date: "Week 12",
-      phase: "Phase 2: Intermediate",
-      phaseNumber: 2,
+      date: "Phase 2 - Week 6",
       weekNumber: 12,
     },
-    // Phase 3: Advanced Topics
+    // Phase 3
     {
       title: "Time Series Forecasting",
       description: "RNNs, LSTMs, and GRUs",
       icon: <ChartBarIcon className="w-6 h-6" />,
-      date: "Weeks 13-14",
-      phase: "Phase 3: Advanced",
-      phaseNumber: 3,
+      date: "Phase 3 - Week 1",
       weekNumber: 13,
     },
     {
       title: "Reinforcement Learning",
       description: "Q-learning and DQNs",
       icon: <CogIcon className="w-6 h-6" />,
-      date: "Weeks 15-16",
-      phase: "Phase 3: Advanced",
-      phaseNumber: 3,
-      weekNumber: 15,
+      date: "Phase 3 - Week 2",
+      weekNumber: 14,
     },
     {
       title: "Transfer Learning and Security",
       description: "Model security and transfer learning",
       icon: <CloudIcon className="w-6 h-6" />,
-      date: "Weeks 17-18",
-      phase: "Phase 3: Advanced",
-      phaseNumber: 3,
-      weekNumber: 17,
+      date: "Phase 3 - Week 3",
+      weekNumber: 15,
     },
     {
-      title: "Autonomous Financial Advisor",
+      title: "Capstone Three: Autonomous Financial Advisor",
       description: "Design a system combining LSTM forecasting and DQN decision-making",
       icon: <CogIcon className="w-6 h-6" />,
-      date: "Week 20",
-      phase: "Phase 3: Advanced",
-      phaseNumber: 3,
-      weekNumber: 20,
+      date: "Phase 3 - Week 4",
+      weekNumber: 16,
     }
   ];
 
@@ -206,7 +174,7 @@ const Curriculum: React.FC = () => {
                 padding: '2rem'
               }}
               contentArrowStyle={{ borderRight: '7px solid rgb(33, 150, 243)' }}
-              date={`Week ${topic.weekNumber}`}
+              date={topic.date}
               iconStyle={{ background: 'rgb(33, 150, 243)', color: '#fff' }}
               icon={topic.icon}
             >

@@ -60,6 +60,7 @@ export interface RegisterData {
 export interface LoginData {
   email: string;
   password: string;
+  rememberMe: boolean;
 }
 
 export interface AuthResponse {
@@ -69,24 +70,33 @@ export interface AuthResponse {
     email: string;
     role: string;
   };
-  accessToken: string;
-  refreshToken: string;
+  token?: string;
+  accessToken?: string;
+  refreshToken?: string;
 }
 
 const authService = {
   register: async (data: RegisterData): Promise<AuthResponse> => {
     const response = await axios.post(`${API_URL}/register`, data);
-    const { accessToken, refreshToken } = response.data;
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
+    const { token, refreshToken } = response.data;
+    if (token) {
+      localStorage.setItem('accessToken', token);
+    }
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken);
+    }
     return response.data;
   },
 
   login: async (data: LoginData): Promise<AuthResponse> => {
     const response = await axios.post(`${API_URL}/login`, data);
-    const { accessToken, refreshToken } = response.data;
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
+    const { token, refreshToken } = response.data;
+    if (token) {
+      localStorage.setItem('accessToken', token);
+    }
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken);
+    }
     return response.data;
   },
 

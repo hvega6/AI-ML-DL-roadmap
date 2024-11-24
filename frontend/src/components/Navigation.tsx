@@ -16,41 +16,18 @@ import {
 } from '@heroicons/react/24/outline';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import Modal from './Modal';
-import Login from '../views/Login';
-import Register from '../views/Register';
 
-interface IUser {
-  email: string;
-  role: 'student' | 'admin';
-  preferences: {
-    theme: 'light' | 'dark';
-  };
+interface NavigationProps {
+  onLoginClick: () => void;
+  onRegisterClick: () => void;
 }
 
-const Navigation: React.FC = () => {
+const Navigation: React.FC<NavigationProps> = ({ onLoginClick, onRegisterClick }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const { isDarkMode, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const history = useHistory();
   const location = useLocation();
-
-  const handleCloseModals = () => {
-    setIsLoginModalOpen(false);
-    setIsRegisterModalOpen(false);
-  };
-
-  const switchToRegister = () => {
-    setIsLoginModalOpen(false);
-    setIsRegisterModalOpen(true);
-  };
-
-  const switchToLogin = () => {
-    setIsRegisterModalOpen(false);
-    setIsLoginModalOpen(true);
-  };
 
   const publicNavigation = [
     { name: 'Home', href: '/', icon: HomeIcon },
@@ -58,34 +35,22 @@ const Navigation: React.FC = () => {
     { name: 'Resources', href: '/resources', icon: BookmarkIcon },
   ];
 
-  const studentNavigation = [
+  const privateNavigation = [
     { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
-    { name: 'Lessons', href: '/lessons', icon: BookOpenIcon },
+    { name: 'Curriculum', href: '/lessons', icon: AcademicCapIcon },
+    { name: 'Resources', href: '/resources', icon: BookmarkIcon },
     { name: 'Profile', href: '/profile', icon: UserCircleIcon },
   ];
 
   const adminNavigation = [
     { name: 'Admin Dashboard', href: '/admin/dashboard', icon: ChartBarIcon },
-    { name: 'Manage Lessons', href: '/admin/lessons', icon: BookOpenIcon },
     { name: 'Manage Users', href: '/admin/users', icon: UserCircleIcon },
+    { name: 'Manage Content', href: '/admin/content', icon: BookmarkIcon },
     { name: 'Settings', href: '/admin/settings', icon: AdjustmentsHorizontalIcon },
+    { name: 'Profile', href: '/profile', icon: UserCircleIcon },
   ];
 
-  const getNavigation = () => {
-    // Show public navigation for non-logged in users
-    if (!user) return publicNavigation;
-    
-    // Show only specific routes for logged-in users
-    const baseNavigation = user.role === 'admin' ? adminNavigation : studentNavigation;
-    
-    // Add resources to both admin and student navigation
-    return [
-      ...baseNavigation,
-      { name: 'Resources', href: '/resources', icon: BookmarkIcon }
-    ];
-  };
-
-  const navigation = getNavigation();
+  const navigation = user ? (user.role === 'admin' ? adminNavigation : privateNavigation) : publicNavigation;
 
   const isActive = (path: string) => {
     if (path === '/' && location.pathname !== '/') {
@@ -94,41 +59,9 @@ const Navigation: React.FC = () => {
     return location.pathname.startsWith(path);
   };
 
-  // Enhanced secure routes with role-based access
-  useEffect(() => {
-    if (user) {
-      // Only handle protected route access
-      if (user.role === 'student' && location.pathname.startsWith('/admin')) {
-        console.log('Student attempting to access admin route, redirecting to dashboard');
-        history.replace('/dashboard');
-        return;
-      }
-
-      if (user.role === 'admin' && location.pathname === '/dashboard') {
-        console.log('Admin accessing student dashboard, redirecting to admin dashboard');
-        history.replace('/admin/dashboard');
-        return;
-      }
-    } else {
-      // Only redirect from protected routes
-      const protectedPaths = ['/dashboard', '/admin', '/profile'];
-      if (protectedPaths.some(path => location.pathname.startsWith(path))) {
-        console.log('Unauthenticated user attempting to access protected route');
-        history.replace('/login', { 
-          returnTo: location.pathname,
-          from: location
-        });
-      }
-    }
-  }, [user, location.pathname]);
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      history.push('/');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+  const handleLogout = () => {
+    logout();
+    history.push('/');
   };
 
   return (
@@ -163,10 +96,10 @@ const Navigation: React.FC = () => {
           </div>
 
           {/* Right side buttons */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center ml-auto">
             <button
               onClick={toggleTheme}
-              className={`p-2 rounded-md border ${
+              className={`p-2 rounded-md border ml-8 ${
                 isDarkMode 
                   ? 'border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600 hover:border-gray-500' 
                   : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
@@ -179,7 +112,7 @@ const Navigation: React.FC = () => {
             {user ? (
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600"
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600 ml-4"
               >
                 <ArrowRightOnRectangleIcon className="h-4 w-4 mr-2" />
                 Logout
@@ -187,14 +120,14 @@ const Navigation: React.FC = () => {
             ) : (
               <>
                 <button
-                  onClick={() => setIsLoginModalOpen(true)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-600"
+                  onClick={onLoginClick}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-600 ml-4"
                 >
                   Login
                 </button>
                 <button
-                  onClick={() => setIsRegisterModalOpen(true)}
-                  className="px-4 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-500 rounded-md hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-gray-600"
+                  onClick={onRegisterClick}
+                  className="px-4 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-500 rounded-md hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-gray-600 ml-4"
                 >
                   Register
                 </button>
@@ -243,7 +176,7 @@ const Navigation: React.FC = () => {
               className={`block px-3 py-2 rounded-md text-base font-medium ${
                 isActive(item.href)
                   ? 'bg-blue-500 text-white'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-blue-500 hover:text-white'
+                  : 'text-gray-300 hover:bg-blue-500 hover:text-white'
               }`}
               onClick={() => setIsOpen(false)}
             >
@@ -256,7 +189,10 @@ const Navigation: React.FC = () => {
           <div className="mt-4 space-y-2 px-3">
             {user ? (
               <button
-                onClick={handleLogout}
+                onClick={() => {
+                  handleLogout();
+                  setIsOpen(false);
+                }}
                 className="w-full inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600"
               >
                 <ArrowRightOnRectangleIcon className="h-4 w-4 mr-2" />
@@ -267,7 +203,7 @@ const Navigation: React.FC = () => {
                 <button
                   onClick={() => {
                     setIsOpen(false);
-                    setIsLoginModalOpen(true);
+                    onLoginClick();
                   }}
                   className="w-full bg-blue-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-600"
                 >
@@ -276,7 +212,7 @@ const Navigation: React.FC = () => {
                 <button
                   onClick={() => {
                     setIsOpen(false);
-                    setIsRegisterModalOpen(true);
+                    onRegisterClick();
                   }}
                   className="w-full px-4 py-2 text-sm font-medium text-blue-600 bg-white border border-blue-500 rounded-md hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-gray-600"
                 >
@@ -287,24 +223,6 @@ const Navigation: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Login Modal */}
-      <Modal isOpen={isLoginModalOpen} onClose={handleCloseModals}>
-        <Login 
-          isModal={true} 
-          onClose={handleCloseModals}
-          onSwitchToRegister={switchToRegister}
-        />
-      </Modal>
-
-      {/* Register Modal */}
-      <Modal isOpen={isRegisterModalOpen} onClose={handleCloseModals}>
-        <Register 
-          isModal={true} 
-          onClose={handleCloseModals}
-          onSwitchToLogin={switchToLogin}
-        />
-      </Modal>
     </nav>
   );
 };

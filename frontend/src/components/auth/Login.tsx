@@ -14,6 +14,7 @@ const Login: React.FC<LoginProps> = ({ isModal, onClose, onSwitchToRegister }) =
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    rememberMe: false
   });
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -21,10 +22,10 @@ const Login: React.FC<LoginProps> = ({ isModal, onClose, onSwitchToRegister }) =
   const { login, isAdmin } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
     // Clear error when user starts typing
     setError('');
@@ -113,6 +114,18 @@ const Login: React.FC<LoginProps> = ({ isModal, onClose, onSwitchToRegister }) =
               className={inputClasses}
               disabled={loading}
             />
+          </div>
+          <div className="mb-6">
+            <label htmlFor="rememberMe" className="block mb-2">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                name="rememberMe"
+                checked={formData.rememberMe}
+                onChange={handleChange}
+              />
+              Remember me
+            </label>
           </div>
           <button type="submit" className={buttonClasses} disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}

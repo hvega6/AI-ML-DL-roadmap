@@ -10,6 +10,15 @@ interface RegisterProps {
   onSwitchToLogin?: () => void;
 }
 
+interface ValidationMessages {
+  length: string;
+  lowercase: string;
+  uppercase: string;
+  number: string;
+  special: string;
+  match: string;
+}
+
 const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }) => {
   const history = useHistory();
   const { register } = useAuth();
@@ -25,7 +34,7 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
-  const [validationMessages, setValidationMessages] = useState({
+  const [validationMessages, setValidationMessages] = useState<ValidationMessages>({
     length: '',
     lowercase: '',
     uppercase: '',
@@ -44,7 +53,6 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }
       special: /[!@#$%^&*(),.?":{}|<>]+/.test(password)
     };
 
-    // Update validation messages
     setValidationMessages({
       length: validations.length ? '' : 'Password must be at least 8 characters',
       lowercase: validations.lowercase ? '' : 'Password must include a lowercase letter',
@@ -67,83 +75,92 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }
 
   useEffect(() => {
     setPasswordStrength(validatePassword(formData.password));
-  }, [formData.password]);
+  }, [formData.password, formData.confirmPassword]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
-    // Update form data
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-
-    // Clear any previous errors
     setError('');
-
-    // Only validate password when the password field changes
-    if (name === 'password') {
-      setPasswordStrength(validatePassword(value));
-    }
-
-    // Update validation messages for password match only when either password field changes
-    if (name === 'password' || name === 'confirmPassword') {
-      setValidationMessages(prev => ({
-        ...prev,
-        match: formData.confirmPassword && value !== (name === 'password' ? formData.confirmPassword : formData.password)
-          ? 'Passwords do not match'
-          : ''
-      }));
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError('');
 
-    // Validate password match
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      setIsLoading(false);
+    const activeValidationMessages = Object.values(validationMessages).filter(msg => msg);
+    if (activeValidationMessages.length > 0) {
+      setError(activeValidationMessages[0]);
       return;
     }
 
-    // Check if there are any validation errors
-    const messages = Object.values(validationMessages).filter(msg => msg);
-    if (messages.length > 0) {
-      setError('Please fix all validation errors before submitting');
-      setIsLoading(false);
+    if (passwordStrength < 100) {
+      setError('Password does not meet all requirements');
       return;
     }
+
+    setIsLoading(true);
 
     try {
-      await register({
-        email: formData.email,
-        password: formData.password
-      });
+      await register(formData);
+      console.log('Registration successful');
       
-      // Reset form
-      setFormData({
-        email: '',
-        password: '',
-        confirmPassword: ''
-      });
-
-      // Close modal if in modal mode
-      if (isModal && onClose) {
-        onClose();
+      if (isModal) {
+        if (onClose) onClose();
+        if (onSwitchToLogin) onSwitchToLogin();
+      } else {
+        history.push('/login');
       }
-
-      // Redirect to dashboard
-      history.replace('/dashboard');
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err.message || 'Failed to register');
+      setError(err.message || 'Registration failed');
     } finally {
       setIsLoading(false);
     }
   };
+
+  const renderPasswordInput = (
+    id: 'password' | 'confirmPassword',
+    label: string,
+    placeholder: string,
+    showState: boolean,
+    setShowState: (value: boolean) => void
+  ) => (
+    <div>
+      <label htmlFor={id} className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+        {label}
+      </label>
+      <div className="relative mt-1">
+        <input
+          type={showState ? 'text' : 'password'}
+          id={id}
+          name={id}
+          value={formData[id]}
+          onChange={handleChange}
+          required
+          className={`block w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+            isDarkMode 
+              ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+          }`}
+          placeholder={placeholder}
+        />
+        <button
+          type="button"
+          onClick={() => setShowState(!showState)}
+          className="absolute inset-y-0 right-0 pr-3 flex items-center"
+        >
+          {showState ? (
+            <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+          ) : (
+            <EyeIcon className="h-5 w-5 text-gray-400" />
+          )}
+        </button>
+      </div>
+    </div>
+  );
 
   const containerClasses = isModal
     ? 'px-6 py-4'
@@ -192,152 +209,89 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }
             />
           </div>
 
-          <div>
-            <label htmlFor="password" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              Password
-            </label>
-            <div className="mt-1 relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                  isDarkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+          {renderPasswordInput('password', 'Password', 'Create your password', showPassword, setShowPassword)}
+          
+          <div className="mt-2">
+            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className={`h-full transition-all duration-300 ${
+                  passwordStrength <= 20
+                    ? 'bg-red-500'
+                    : passwordStrength <= 40
+                    ? 'bg-yellow-500'
+                    : passwordStrength <= 60
+                    ? 'bg-yellow-400'
+                    : passwordStrength <= 80
+                    ? 'bg-indigo-500'
+                    : 'bg-green-500'
                 }`}
-                placeholder="Enter your password"
+                style={{ width: `${passwordStrength}%` }}
               />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                ) : (
-                  <EyeIcon className="h-5 w-5 text-gray-400" />
-                )}
-              </button>
             </div>
-            
-            {/* Password Strength Bar */}
-            <div className="mt-2">
-              <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className={`h-full transition-all duration-300 ${
-                    passwordStrength <= 20
-                      ? 'bg-red-500'
-                      : passwordStrength <= 40
-                      ? 'bg-yellow-500'
-                      : passwordStrength <= 60
-                      ? 'bg-yellow-400'
-                      : passwordStrength <= 80
-                      ? 'bg-indigo-500'
-                      : 'bg-green-500'
+            <div className={`mt-3 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <p className="mb-2 font-medium">Password must contain:</p>
+              <div className="grid grid-cols-3 gap-x-2 gap-y-2">
+                <div 
+                  className={`flex items-center transition-colors duration-200 ${
+                    formData.password.length >= 8 ? 'text-green-500' : ''
                   }`}
-                  style={{ width: `${passwordStrength}%` }}
-                />
-              </div>
-              <div className={`mt-3 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                <p className="mb-2 font-medium">Password must contain:</p>
-                <div className="grid grid-cols-3 gap-x-2 gap-y-2">
-                  <div 
-                    className={`flex items-center transition-colors duration-200 ${
-                      formData.password.length >= 8 ? 'text-green-500' : ''
-                    }`}
-                    title={validationMessages.length}
-                  >
-                    <span className="mr-2">{formData.password.length >= 8 ? '✓' : '○'}</span>
-                    8+ characters
-                  </div>
-                  <div 
-                    className={`flex items-center transition-colors duration-200 ${
-                      /[a-z]/.test(formData.password) ? 'text-green-500' : ''
-                    }`}
-                    title={validationMessages.lowercase}
-                  >
-                    <span className="mr-2">{/[a-z]/.test(formData.password) ? '✓' : '○'}</span>
-                    Lowercase
-                  </div>
-                  <div 
-                    className={`flex items-center transition-colors duration-200 ${
-                      /[A-Z]/.test(formData.password) ? 'text-green-500' : ''
-                    }`}
-                    title={validationMessages.uppercase}
-                  >
-                    <span className="mr-2">{/[A-Z]/.test(formData.password) ? '✓' : '○'}</span>
-                    Uppercase
-                  </div>
-                  <div 
-                    className={`flex items-center transition-colors duration-200 ${
-                      /[0-9]/.test(formData.password) ? 'text-green-500' : ''
-                    }`}
-                    title={validationMessages.number}
-                  >
-                    <span className="mr-2">{/[0-9]/.test(formData.password) ? '✓' : '○'}</span>
-                    At least 1 Number
-                  </div>
-                  <div 
-                    className={`flex items-center transition-colors duration-200 ${
-                      /[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? 'text-green-500' : ''
-                    }`}
-                    title={validationMessages.special}
-                  >
-                    <span className="mr-2">{/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? '✓' : '○'}</span>
-                    1 Special Character
-                  </div>
-                  <div 
-                    className={`flex items-center transition-colors duration-200 ${
-                      formData.confirmPassword && formData.password === formData.confirmPassword ? 'text-green-500' : ''
-                    }`}
-                    title={validationMessages.match}
-                  >
-                    <span className="mr-2">
-                      {formData.confirmPassword && formData.password === formData.confirmPassword ? '✓' : '○'}
-                    </span>
-                    Match
-                  </div>
+                  title={validationMessages.length}
+                >
+                  <span className="mr-2">{formData.password.length >= 8 ? '✓' : '○'}</span>
+                  8+ characters
+                </div>
+                <div 
+                  className={`flex items-center transition-colors duration-200 ${
+                    /[a-z]/.test(formData.password) ? 'text-green-500' : ''
+                  }`}
+                  title={validationMessages.lowercase}
+                >
+                  <span className="mr-2">{/[a-z]/.test(formData.password) ? '✓' : '○'}</span>
+                  Lowercase
+                </div>
+                <div 
+                  className={`flex items-center transition-colors duration-200 ${
+                    /[A-Z]/.test(formData.password) ? 'text-green-500' : ''
+                  }`}
+                  title={validationMessages.uppercase}
+                >
+                  <span className="mr-2">{/[A-Z]/.test(formData.password) ? '✓' : '○'}</span>
+                  Uppercase
+                </div>
+                <div 
+                  className={`flex items-center transition-colors duration-200 ${
+                    /[0-9]/.test(formData.password) ? 'text-green-500' : ''
+                  }`}
+                  title={validationMessages.number}
+                >
+                  <span className="mr-2">{/[0-9]/.test(formData.password) ? '✓' : '○'}</span>
+                  At least 1 Number
+                </div>
+                <div 
+                  className={`flex items-center transition-colors duration-200 ${
+                    /[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? 'text-green-500' : ''
+                  }`}
+                  title={validationMessages.special}
+                >
+                  <span className="mr-2">{/[!@#$%^&*(),.?":{}|<>]/.test(formData.password) ? '✓' : '○'}</span>
+                  1 Special Character
+                </div>
+                <div 
+                  className={`flex items-center transition-colors duration-200 ${
+                    formData.confirmPassword && formData.password === formData.confirmPassword ? 'text-green-500' : ''
+                  }`}
+                  title={validationMessages.match}
+                >
+                  <span className="mr-2">
+                    {formData.confirmPassword && formData.password === formData.confirmPassword ? '✓' : '○'}
+                  </span>
+                  Match
                 </div>
               </div>
             </div>
           </div>
 
-          <div>
-            <label htmlFor="confirmPassword" className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              Confirm Password
-            </label>
-            <div className="mt-1 relative">
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-                className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
-                  isDarkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                }`}
-                placeholder="Confirm your password"
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                {showConfirmPassword ? (
-                  <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                ) : (
-                  <EyeIcon className="h-5 w-5 text-gray-400" />
-                )}
-              </button>
-            </div>
-          </div>
+          {renderPasswordInput('confirmPassword', 'Confirm Password', 'Confirm your password', showConfirmPassword, setShowConfirmPassword)}
 
           <div>
             <button

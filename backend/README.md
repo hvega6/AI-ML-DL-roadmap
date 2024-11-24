@@ -74,6 +74,15 @@ npm start
 - `PUT /api/users/profile` - Update user profile
 - `GET /api/users/progress` - Get learning progress
 
+### Admin
+- `GET /api/admin/users` - List all users
+- `PUT /api/admin/users/:id` - Update user role/status
+- `DELETE /api/admin/users/:id` - Delete user
+- `GET /api/admin/content` - List all content
+- `POST /api/admin/content` - Create new content
+- `PUT /api/admin/content/:id` - Update content
+- `DELETE /api/admin/content/:id` - Delete content
+
 ### Courses
 - `GET /api/courses` - List all courses
 - `GET /api/courses/:id` - Get course details
@@ -93,12 +102,14 @@ npm start
 
 ## 🛡️ Security Features
 
-- JWT Authentication
+- JWT Authentication with Role-Based Access Control
 - Request Rate Limiting
 - CORS Configuration
 - Input Validation
 - Error Handling
 - Security Headers
+- Role Verification Middleware
+- Admin Access Protection
 
 ## 📦 Key Dependencies
 
@@ -138,6 +149,8 @@ npm run test:coverage
   email: string
   password: string
   name: string
+  role: 'admin' | 'user'
+  status: 'active' | 'inactive'
   progress: {
     courses: string[]
     completedLessons: string[]

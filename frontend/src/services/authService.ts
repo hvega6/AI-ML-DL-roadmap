@@ -3,6 +3,10 @@ import { jwtDecode } from 'jwt-decode';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/auth';
 
+// Configure axios defaults
+axios.defaults.withCredentials = true;
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+
 // Add auth header to requests
 axios.interceptors.request.use(
   (config) => {
@@ -10,17 +14,36 @@ axios.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Log request in development
+    if (import.meta.env.DEV) {
+      console.log('Request:', config);
+    }
     return config;
   },
   (error) => {
+    console.error('Request error:', error);
     return Promise.reject(error);
   }
 );
 
-// Handle token refresh
+// Handle token refresh and errors
 axios.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Log response in development
+    if (import.meta.env.DEV) {
+      console.log('Response:', response);
+    }
+    return response;
+  },
   async (error) => {
+    // Log detailed error information
+    console.error('Response error:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      config: error.config,
+      message: error.message
+    });
+
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -43,6 +66,7 @@ axios.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return axios(originalRequest);
       } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError);
         authService.logout();
         return Promise.reject(refreshError);
       }

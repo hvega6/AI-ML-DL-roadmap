@@ -20,12 +20,16 @@ frontend/
 │
 ├── src/
 │   ├── components/       # Reusable UI components
-│   ├── context/          # React context providers
-│   ├── services/         # API and utility services
-│   ├── types/            # TypeScript type definitions
-│   ├── views/            # Main page/route components
-│   ├── App.tsx           # Main application component
-│   └── index.tsx         # Entry point
+│   │   └── AuthModal.tsx # Authentication modal component
+│   ├── context/         # React context providers
+│   ├── services/        # API and utility services
+│   ├── types/          # TypeScript type definitions
+│   ├── views/          # Main page/route components
+│   │   ├── admin/      # Admin-specific views
+│   │   ├── Home.tsx    # Main dashboard
+│   │   └── Register.tsx # User registration
+│   ├── App.tsx         # Main application component
+│   └── index.tsx       # Entry point
 ```
 
 ## 🌟 Key Features
@@ -33,11 +37,22 @@ frontend/
 ### 1. Authentication System
 - Secure JWT-based authentication
 - Login and registration flows
+- Role-based access control (Admin/Student)
 - Protected routes
 - Session management
 - Automatic token refresh and logout
 
-### 2. Dashboard
+### 2. Admin Dashboard
+- User Management Interface
+  - View all users
+  - Modify user roles
+  - Manage user access
+- Content Management System
+  - Add/Edit learning content
+  - Organize learning paths
+  - Monitor content engagement
+
+### 3. User Dashboard
 - Interactive user progress visualization
 - Three main charts:
   - Lesson Completion (Doughnut Chart)
@@ -46,7 +61,7 @@ frontend/
 - Dark/Light mode support
 - Responsive design
 
-### 3. Learning Modules
+### 4. Learning Modules
 - Structured lesson progression
 - Interactive lesson components
 - Progress tracking

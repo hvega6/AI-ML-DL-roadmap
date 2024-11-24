@@ -13,10 +13,13 @@ An interactive learning platform designed to guide you through the world of Arti
 
 - 🎯 **Structured Learning Paths**: Carefully curated content from basics to advanced topics
 - 🌈 **Interactive UI**: Modern, responsive design with particle animations
-- 🔐 **User Authentication**: Secure login and registration system
-- 📚 **Comprehensive Curriculum**: Covering AI, ML, and DL fundamentals
+- 🔐 **User Authentication**: Secure login and registration system with admin capabilities
+- 👥 **User Management**: Admin panel for managing users and their roles
+- 📚 **Content Management**: Admin interface for managing learning content
 - 🌙 **Dark/Light Mode**: Theme support for comfortable viewing
 - 📱 **Responsive Design**: Optimized for both desktop and mobile devices
+- 🔄 **Dynamic Content**: Real-time content updates and management
+- 🛡️ **Role-based Access**: Separate views and permissions for users and admins
 
 ## 🛠️ Tech Stack
 
@@ -79,9 +82,16 @@ npm run dev
 
 ```
 AI-ML-DL-roadmap/
-├── frontend/          # React frontend application
-├── backend/           # Node.js backend server
-└── docs/             # Documentation and learning resources
+├── frontend/          # React TypeScript frontend application
+│   ├── src/
+│   │   ├── views/    # Page components including admin views
+│   │   ├── components/# Reusable UI components
+│   │   └── context/  # Application state management
+├── backend/          # Node.js backend server
+│   ├── routes/      # API endpoints
+│   ├── models/      # Database schemas
+│   └── middleware/  # Custom middleware
+└── docs/           # Documentation and learning resources
 ```
 
 ## 🤝 Contributing

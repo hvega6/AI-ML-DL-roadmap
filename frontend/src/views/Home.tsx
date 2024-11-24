@@ -75,8 +75,8 @@ const Home: React.FC = () => {
   ];
 
   return (
-    <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} -mt-16`}>
-      <div className="relative">
+    <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} -mt-16 overflow-x-hidden min-h-screen`}>
+      <div className="relative overflow-x-hidden">
         {/* Hero Section */}
         <div ref={heroRef} className={`relative overflow-hidden h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
           {/* Particle Container */}
@@ -203,8 +203,8 @@ const Home: React.FC = () => {
         </div>
 
         {/* Main Image Section */}
-        <div className={`relative min-h-screen flex items-center ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-          <div className="absolute inset-x-0 top-12 bottom-2">
+        <div className={`relative min-h-screen flex items-center ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} overflow-x-hidden`}>
+          <div className="absolute inset-x-0 top-12 bottom-2 overflow-hidden">
             {particles.map((particle, i) => (
               <div
                 key={`section-particle-${i}`}
@@ -271,8 +271,8 @@ const Home: React.FC = () => {
                       <img
                         src={infographyImage}
                         alt="AI Learning Roadmap Infographic"
-                        className="mx-auto w-full h-auto rounded-lg shadow-lg"
-                        style={{ maxWidth: '1300px' }}
+                        className="mx-auto w-full h-auto rounded-lg shadow-lg object-contain"
+                        style={{ maxWidth: '100%' }}
                       />
                     </div>
                   </div>
@@ -283,7 +283,7 @@ const Home: React.FC = () => {
         </div>
 
         {/* Testimonials Section */}
-        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-gradient-to-br from-blue-50 to-indigo-100'} py-12 sm:py-20`}>
+        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-gradient-to-br from-blue-50 to-indigo-100'} py-12 sm:py-20 overflow-x-hidden`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8 sm:mb-16">
               <h2 className={`text-3xl sm:text-4xl font-extrabold ${isDarkMode ? 'text-white' : 'text-blue-900'}`}>
@@ -398,12 +398,9 @@ const Home: React.FC = () => {
         {/* Scroll to Top Button */}
         <button
           onClick={scrollToTop}
-          className={`fixed bottom-8 right-8 p-3 rounded-full shadow-lg transition-all duration-300 ${showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'
-            } ${isDarkMode
-              ? 'bg-blue-500 hover:bg-blue-600 text-white'
-              : 'bg-blue-700 hover:bg-blue-800 text-white'
-            }`}
-          style={{ zIndex: 1000 }}
+          className={`fixed bottom-8 right-8 p-3 rounded-full shadow-lg transition-all duration-300 z-50 ${
+            showScrollTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'
+          } bg-blue-500 hover:bg-blue-600 text-white`}
           aria-label="Scroll to top"
         >
           <ArrowUpIcon className="w-6 h-6" />

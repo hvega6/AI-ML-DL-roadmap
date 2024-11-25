@@ -6,11 +6,11 @@ import { BookOpenIcon, ChartBarIcon, BeakerIcon, CpuChipIcon, AcademicCapIcon, C
 // Images are in src/public or src/public/images
 const getImagePath = (weekNumber: number | string) => {
   try {
-    // First try to import from public directory
-    return new URL(`/src/public/${weekNumber}.png`, import.meta.url).href;
+    // In production, assets should be in the public directory
+    return `/${weekNumber}.png`;
   } catch {
-    // If not found, try the images subdirectory
-    return new URL(`/src/public/images/${weekNumber}.png`, import.meta.url).href;
+    // Fallback to images subdirectory
+    return `/images/${weekNumber}.png`;
   }
 };
 

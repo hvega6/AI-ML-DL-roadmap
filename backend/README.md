@@ -12,7 +12,6 @@ Robust and scalable backend for the AI Learning Platform built with Node.js, Exp
 - 🔐 **Authentication**: JWT-based user authentication system
 - 🎯 **RESTful APIs**: Well-structured endpoints following REST principles
 - 📚 **MongoDB Integration**: Efficient data modeling and querying
-- 🔄 **OpenAI Integration**: AI-powered features and content generation
 - 🛡️ **Security**: Implementation of security best practices
 - 📝 **Validation**: Request validation and error handling
 

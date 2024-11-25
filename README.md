@@ -6,7 +6,7 @@
 An interactive learning platform designed to guide you through the world of Artificial Intelligence, Machine Learning, and Deep Learning. From fundamentals to advanced concepts, we provide structured learning paths with hands-on projects and real-world applications.
 
 <div align="center">
-  <img src="./frontend/src/public/assets/infography.png" alt="AI Learning Roadmap Infographic" width="100%" />
+  <img src="./frontend/src/assets/infography.png" alt="AI Learning Roadmap Infographic" width="100%" />
 </div>
 
 ## ✨ Features

@@ -84,13 +84,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       setError(null);
       const response = await authService.register(data);
-      const userData = response.user as User;
+      const userData = response.user;
+      userData.isAdmin = userData.role === 'admin';
       setUser(userData);
       setIsAdmin(userData.role === 'admin');
       setIsAuthenticated(true);
-      if (response.accessToken) {
-        localStorage.setItem('accessToken', response.accessToken);
+      if (response.token) {
+        localStorage.setItem('accessToken', response.token);
         localStorage.setItem('user', JSON.stringify(userData));
+      }
+      // Navigate to appropriate dashboard based on user role
+      if (userData.role === 'admin') {
+        history.push('/admin/dashboard');
+      } else {
+        history.push('/dashboard');
       }
     } catch (err: any) {
       console.error('Registration error:', err);

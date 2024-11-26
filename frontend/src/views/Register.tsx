@@ -111,7 +111,7 @@ const Register: React.FC<RegisterProps> = ({ isModal, onClose, onSwitchToLogin }
         if (onClose) onClose();
         if (onSwitchToLogin) onSwitchToLogin();
       } else {
-        history.push('/login');
+        history.push('/dashboard');
       }
     } catch (err: any) {
       console.error('Registration error:', err);

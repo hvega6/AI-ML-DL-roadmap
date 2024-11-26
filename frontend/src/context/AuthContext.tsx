@@ -84,10 +84,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       setError(null);
       const response = await authService.register(data);
-      const userData = response.user;
-      userData.isAdmin = userData.role === 'admin';
+      const userData: User = {
+        ...response.user,
+        isAdmin: response.user.role === 'admin'
+      };
       setUser(userData);
-      setIsAdmin(userData.role === 'admin');
+      setIsAdmin(userData.isAdmin || false);
       setIsAuthenticated(true);
       if (response.token) {
         localStorage.setItem('accessToken', response.token);
